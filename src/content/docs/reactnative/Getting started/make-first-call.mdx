@@ -1,0 +1,243 @@
+---
+title: Make first call
+description: A guide with the essential steps of how to make the first call via ConnectyCube ReactNative Video SDK - from session creation to initialising and accepting the call
+head:
+  - tag: title
+    content: Make first call guide | ConnectyCube React Native SDK
+sidebar: 
+    label: Make first call
+    order: 2
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+**ConnectyCube’s Video Calling Peer-to-Peer (P2P) API** provides a solution for integrating real-time video and audio calling into your application. This API enables you to create smooth one-on-one and group video calls, supporting a wide range of use cases like virtual meetings, telemedicine consultations, social interactions, and more. The P2P approach ensures that media streams are transferred directly between users whenever possible, minimizing latency and delivering high-quality audio and video. 
+
+If you’re planning to build a new app, we recommend starting with one of our [code samples apps](/reactnative/getting-started/code-samples) as a foundation for your client app.    
+If you already have an app and you are looking to add chat and voice/video calls to it, proceed with this guide. This guide walks you through installing the ConnectyCube SDK in your app, configure it and then initiating the call to the opponent.
+
+## Before you start
+
+Before you start, make sure:
+1. You have access to ConnectyCube account. If you don’t have an account, [sign up here](https://admin.connectycube.com/register).
+2. An app created in ConnectyCube dashboard. Once logged into [your ConnectyCube account](https://admin.connectycube.com/signin), create a new application and make a note of the app credentials (app ID and auth key) that you’ll need for authentication.
+
+## Step 1: Configure SDK
+
+To use voice and video calls in a client app, you should install, import and configure ConnectyCube SDK.
+
+<div style={{
+  fontSize: "0.9em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "10px"
+}}>
+  <strong>Note:</strong> If the app is already created during the onboarding process and you followed all the instructions, you can skip the 'Configure SDK' step and start with <a href="#step-2-сonnect-react-native-webrtc-lib">Connect React Native WerRTC lib</a>.
+</div>
+
+### Install SDK
+
+Install package from the command line:
+
+<Tabs syncKey="installSDK">
+<TabItem label='npm'>
+```bash
+npm install react-native-connectycube --save
+```
+</TabItem>
+<TabItem label='yarn'>
+```bash
+yarn add react-native-connectycube
+```
+</TabItem>
+</Tabs>
+
+### Import SDK
+
+Add the following import statement to start using all classes and methods.
+
+```javascript
+import ConnectyCube from 'react-native-connectycube';
+```
+
+### Initialize SDK
+
+Initialize the SDK with your ConnectyCube application credentials. You can access your application credentials in [ConnectyCube Dashboard](https://admin.connectycube.com):
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v4'>
+```javascript
+const CREDENTIALS = {
+  appId: 21,
+  authKey: 'hhf87hfushuiwef',
+};
+
+ConnectyCube.init(CREDENTIALS);
+```
+</TabItem>
+
+<TabItem label='SDK v3'>
+```javascript
+const CREDENTIALS = {
+  appId: 21,
+  authKey: 'hhf87hfushuiwef',
+  authSecret: 'jjsdf898hfsdfk',
+};
+
+ConnectyCube.init(CREDENTIALS);
+```
+</TabItem>
+</Tabs>
+
+## Step 2: Сonnect React Native WebRTC lib
+
+Since **react-native-connectycube** version 3.34.0, the **react-native-webrtc** has been replaced from dependencies to peerDependencies to support autolinking. Install the **react-native-webrtc** and follow the [Getting started](https://github.com/react-native-webrtc/react-native-webrtc?tab=readme-ov-file#getting-started). Configure your [iOS](https://github.com/react-native-webrtc/react-native-webrtc/blob/master/Documentation/iOSInstallation.md) and [Android](https://github.com/react-native-webrtc/react-native-webrtc/blob/master/Documentation/AndroidInstallation.md) projects.
+
+## Step 3: Create and Authorise User
+
+As a starting point, the user's session token needs to be created allowing to participate in calls.    
+
+```javascript
+const userCredentials = { login: "cubeuser", password: "awesomepwd" };
+// const userCredentials = { email: 'cubeuser@gmail.com', password: 'awesomepwd' };
+// const userCredentials = { provider: 'facebook', keys: {token: 'a876as7db...asg34dasd8wqe'} };
+
+ConnectyCube.createSession(userCredentials)
+  .then((session) => {})
+  .catch((error) => {});
+```
+
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> such approach with the automatic user creation works well for testing purposes and while the application isn’t launched on production. For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+## Step 4: Connect User to chat
+
+Connecting to the chat is an essential step in enabling real-time communication.
+
+**ConnectyCube Chat API** is used as a signaling transport for Video Calling API, so to start using Video Calling API you need to connect user to Chat:
+
+```javascript
+const userCredentials = {
+  userId: 4448514,
+  password: "supersecurepwd",
+};
+
+ConnectyCube.chat
+  .connect(userCredentials)
+  .then(() => {
+    // connected
+  })
+  .catch((error) => {});
+```
+
+## Step 5: Create video session
+
+Also, to use Video Calling API you need to create a call session object - choose your opponent(s) you will have a call with and a type of session (VIDEO or AUDIO):
+
+```javascript
+const calleesIds = [56, 76, 34]; // User's ids
+const sessionType = ConnectyCube.videochat.CallType.VIDEO; // AUDIO is also possible
+const additionalOptions = {};
+const session = ConnectyCube.videochat.createNewSession(calleesIds, sessionType, additionalOptions);
+```
+
+## Step 6: Access local media stream
+
+In order to have a video chat session you need to get an access to the user’s devices (webcam / microphone):
+
+```javascript
+const mediaParams = {
+  audio: true,
+  video: true
+};
+
+session
+  .getUserMedia(mediaParams)
+  .then((localStream) => {
+
+    // pass a local or remote stream to the RTCView component
+    //
+    // <RTCView  objectFit="cover" style={styles.rtcView} key={currentUserId} streamURL={localStream.toURL()} />
+  })
+  .catch((error) => {});
+```
+
+## Step 7: Initiate a call 
+
+The *initiate call* function is essential for starting a video call session between users, enabling real-time communication by establishing the initial connection:
+
+```javascript
+const extension = {};
+session.call(extension);
+```
+The extension is used to pass any extra parameters in the request to your opponents.
+
+After this, your opponents will receive a callback call:
+
+```javascript
+ConnectyCube.videochat.onCallListener = function (session, extension) {};
+```
+
+Or if your opponents are offline or did not answer the call request:
+
+```javascript
+ConnectyCube.videochat.onUserNotAnswerListener = function (session, userId) {};
+```
+
+## Step 8: Accept call 
+
+To accept a call the following code snippet is used:
+
+```javascript
+ConnectyCube.videochat.onCallListener = function (session, extension) {
+  // Here we need to show a dialog with 2 buttons - Accept & Reject.
+  // By accepting -> run the following code:
+  //
+  // 1. await session.getUserMedia (...)
+  //
+  // 2. Accept call request:
+  const extension = {};
+  session.accept(extension);
+};
+```
+
+After this, you will get a confirmation in the following callback:
+
+```javascript
+ConnectyCube.videochat.onAcceptCallListener = function (session, userId, extension) {};
+```
+
+Also, both the caller and opponents will get a special callback with the remote stream:
+
+```javascript
+ConnectyCube.videochat.onRemoteStreamListener = function (session, userID, remoteStream) {
+  // attach the remote stream to a video element
+
+  // import {RTCView} from 'react-native-connectycube';
+  //
+  // <RTCView  objectFit="cover" style={styles.rtcView} key={userId} streamURL={remoteStream.toURL()} />
+};
+```
+
+Great work! You've completed the essentials of making a call in ConnectyCube. From this point, you and your opponents should start seeing each other.
+
+
+#### What's next? 
+To enhance your calling feature with advanced functionalities, such as call recording, screen sharing, or integrating emojis and attachments during calls, follow the API guides below. These additions will help create a more dynamic and engaging experience for your users!
+* [Voice/video calling SDK documentation](/reactnative/videocalling)
+* [Conference calling SDK documentation](/reactnative/videocalling-conference/)
+

@@ -1,0 +1,461 @@
+---
+title: Authentication and Users
+description: Simplify user authentication in your Cordova app with our definitive API guide. Fortify your app's defenses and protect user data effectively.
+head:
+  - tag: title
+    content: Cordova Authentication and Users APIs | ConnectyCube
+sidebar: 
+    label: Authentication and Users
+    order: 3
+---
+
+Every user has to authenticate with ConnectyCube before using any ConnectyCube functionality.
+
+When someone connects with an application using ConnectyCube, the application will need to obtain a session token which provides temporary, secure access to ConnectyCube APIs.
+
+A session token is an opaque string that identifies a user and an application.
+
+## Create session token
+
+As a starting point, the user’s session token needs to be created allowing user any further actions within the app. Pass login/email and password to identify a user:
+
+```javascript
+const userCredentials = { login: "cubeuser", password: "awesomepwd" };
+
+ConnectyCube.createSession(userCredentials)
+  .then((session) => {})
+  .catch((error) => {});
+```
+
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+### Authentication via phone number
+
+Sign In with phone number is supported with ([Firebase integration](https://firebase.google.com/docs/auth/web/phone-auth)).
+
+You need to create Firebase `project_id` and obtain Firebase `access_token` after SMS code verification, then pass these parameters to `login` method:
+
+```javascript
+const userCredentials = {
+  provider: "firebase_phone",
+  "firebase_phone[project_id]": "...",
+  "firebase_phone[access_token]": "...",
+};
+
+ConnectyCube.createSession(userCredentials)
+  .then((user) => {})
+  .catch((error) => {});
+```
+
+> **Note**
+>
+> in order to login via phone number you need to create a session token first.
+
+### Authentication via Firebase email
+
+Sign In with email is supported with ([Firebase integration](https://firebase.google.com/docs/auth/web/password-auth)).
+
+You need to create Firebase `project_id` and obtain Firebase `access_token` after email/password verification, then pass these parameters to `login` method:
+
+```javascript
+const userCredentials = {
+  provider: 'firebase_email',
+  firebase_email: {
+    project_id: 'XXXXXXXXXXX',
+    access_token: 'XXXXXXXXXXXYYYYYY'
+  }
+};
+
+ConnectyCube.createSession(userCredentials)
+  .then((user) => {})
+  .catch((error) => {});
+```
+
+> **Note**
+>
+> in order to login via email you need to create a session token first.
+
+### Authentication via external identity provider
+
+**Custom Identity Provider (CIdP)** feature is necessary if you have your own user database and want to authenticate users in ConnectyCube against it. It works the same way as Facebook/Twitter SSO.
+
+With Custom Identity Provider feature you can continue use your user database instead of storing/copying user data to ConnectyCube database.
+
+#### CIdP high level integration flow
+
+To get started with **CIdP** integration, check the [Custom Identity Provider guide](/guides/custom-identity-provider) which describes high level integration flow.
+
+#### How to login via CIdP
+
+Once you done with the setup mapping in ConnectyCube Dashboard, it's time to verify the integration.
+To perform CIdP login, the same ConnectyCube [User Login API](/cordova/authentication-and-users/#upgrade-session-token-user-login) is used. You just use existing login request params to pass your external user token: 
+
+```javascript
+const userCredentials = { login: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIzNDU2Nzg5LCJuYW1lIjoiSm9zZXBoIn0.OpOSSw7e485LOP5PrzScxHb7SR6sAOMRckfFwi4rp7o" };
+
+ConnectyCube.createSession(userCredentials)
+  .then((user) => {})
+  .catch((error) => {});
+```
+
+Once the login is successful, ConnectyCube will create an underalying User entity, so then you can use ConnectyCube APIs in a same way as you do with a normal login. With CIdP we do not have/store any user password in ConnectyCube User entity.
+
+Following further integration, you may need to connect to Chat. In a case of CIdP login, you do not have a user password. In such cases you should use ConnectyCube session token as a password for chat connection. [Follow the Connect to Chat with CIdP guide](/cordova/messaging/#connect-to-chat-using-custom-authentication-providers).
+
+### Create guest session
+
+To create a session with guest user use the following code:
+
+```javascript
+const guestUserCredentials = { guest: '1', full_name: 'Awesome Smith' };
+
+ConnectyCube.createSession(guestUserCredentials)
+  .then((session) => {})
+  .catch((error) => {});
+```
+
+## Session expiration
+
+Expiration time for session token is 2 hours after last request to API. If you perform query with expired token, you will receive the error **Required session does not exist**. In this case you need to recreate a session token.
+
+There is a special callback function to handle this case:
+
+```javascript
+const CONFIG = {
+  on: {
+    sessionExpired: (handleResponse, retry) => {
+      // call handleResponse() if you do not want to process a session expiration,
+      // so an error will be returned to origin request
+      // handleResponse();
+
+      ConnectyCube.createSession()
+        .then(retry)
+        .catch((error) => {});
+    },
+  },
+};
+
+ConnectyCube.init(CREDENTIALS, CONFIG);
+```
+
+## Destroy session token
+
+To destroy a session use the following code:
+
+```javascript
+ConnectyCube.destroySession().catch((error) => {});
+```
+
+## User signup
+
+```javascript
+const userProfile = {
+  login: "marvin18",
+  password: "supersecurepwd",
+  email: "awesomeman@gmail.com",
+  full_name: "Marvin Simon",
+  phone: "47802323143",
+  website: "https://dozensofdreams.com",
+  tag_list: ["iphone", "apple"],
+  custom_data: JSON.stringify({ middle_name: "Bartoleo" }),
+};
+
+ConnectyCube.users
+  .signup(userProfile)
+  .then((user) => {})
+  .catch((error) => {});
+```
+
+Response example from `ConnectyCube.users.signup(userProfile)`:
+
+```json
+{
+  "id": 81,
+  "full_name": "Marvin Simon",
+  "email": "awesomeman@gmail.com",
+  "login": "marvin18",
+  "phone": "47802323143",
+  "website": "https://dozensofdreams.com",
+  "created_at": "2018-06-15T14:20:54Z",
+  "updated_at": "2018-12-05T11:58:02Z",
+  "last_request_at": "2018-12-05T11:58:02Z",
+  "external_user_id": null,
+  "facebook_id": null,
+  "twitter_id": null,
+  "custom_data": "{\"middle_name\":\"Bartoleo\"}",
+  "blob_id": null,
+  "avatar": "",
+  "user_tags": "iphone,apple"
+}
+```
+
+Only login (or email) + password are required.
+
+## User profile update
+
+```javascript
+const updatedUserProfile = {
+  login: "marvin18sim",
+  full_name: "Mar Sim",
+};
+
+ConnectyCube.users
+  .update(updatedUserProfile)
+  .then((user) => {})
+  .catch((error) => {});
+```
+
+Response example from `ConnectyCube.users.update(updatedUserProfile)`:
+
+```json
+{
+  "id": 81,
+  "full_name": "Mar Sim",
+  "email": "awesomeman@gmail.com",
+  "login": "marv18sim",
+  "phone": "47802323143",
+  "website": "https://dozensofdreams.com",
+  "created_at": "2018-06-15T14:20:54Z",
+  "updated_at": "2018-12-05T11:58:02Z",
+  "last_request_at": "2018-12-05T11:58:02Z",
+  "external_user_id": null,
+  "facebook_id": null,
+  "twitter_id": null,
+  "custom_data": "{\"middle_name\": \"Bartoleo\"}",
+  "blob_id": null,
+  "avatar": "",
+  "user_tags": "iphone,apple"
+}
+```
+
+If you want to change your password, you need to provide 2 parameters: `password` and `old_password`. Updated `user` entity will be returned.
+
+## User avatar
+
+You can set a user's avatar. You just need to upload it to the ConnectyCube cloud storage and then connect to user.
+
+```javascript
+// for example, a file from HTML form input field
+const inputFile = $("input[type=file]")[0].files[0];
+
+const fileParams = {
+  name: inputFile.name,
+  file: inputFile,
+  type: inputFile.type,
+  size: inputFile.size,
+  public: false,
+};
+
+const updateUser = (uploadedFile) => {
+  const updatedUserProfile = { avatar: uploadedFile.uid };
+  return ConnectyCube.users.update(updatedUserProfile);
+};
+
+ConnectyCube.storage
+  .createAndUpload(fileParams)
+  .then(updateUser)
+  .then((updatedUser) => {})
+  .catch((error) => {});
+```
+
+Response example from `ConnectyCube.storage.createAndUpload(fileParams)`:
+
+```json
+{
+  "account_id": 7,
+  "app_id": 12,
+  "blob_object_access": {
+    "blob_id": 421517,
+    "expires": "2020-10-06T15:51:38Z",
+    "id": 421517,
+    "object_access_type": "Write",
+    "params": "https://s3.amazonaws.com/cb-shared-s3?Content-Type=text%2Fplain..."
+  },
+  "blob_status": null,
+  "content_type": "text/plain",
+  "created_at": "2020-10-06T14:51:38Z",
+  "id": 421517,
+  "name": "awesome.txt",
+  "public": false,
+  "set_completed_at": null,
+  "size": 11,
+  "uid": "7cafb6030d3e4348ba49cab24c0cf10800",
+  "updated_at": "2020-10-06T14:51:38Z"
+}
+```
+
+Now, other users can get you avatar:
+
+```javascript
+const avatarUID = updatedUser.avatar;
+const avatarURL = ConnectyCube.storage.privateUrl(avatarUID);
+const avatarHTML = "<img src='" + avatarURL + "' alt='photo'/>";
+```
+
+## Password reset
+
+It's possible to reset a password via email:
+
+```javascript
+ConnectyCube.users
+  .resetPassword("awesomeman@gmail.com")
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+If provided email is valid - an email with password reset instruction will be sent to it.
+
+## Retrieve users V2
+
+### Examples
+
+Retrieve users by ID
+
+```javascript
+const searchParams = { 
+    limit: 10,
+    offset: 50,
+    id: { in: [51941, 51946] }
+}
+
+ConnectyCube.users.getV2(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+Retrieve users by login
+
+```javascript
+const searchParams = { login: 'adminFirstUser' }
+
+ConnectyCube.users.getV2(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+Retrieve users by last_request_at
+
+```javascript
+const date = new Date(2017, 10, 10)
+const searchParams = { last_request_at: { gt: date } }
+
+ConnectyCube.users.getV2(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+More information (fields, operators, request rules) available [here](/server/users#retrieve-users-v2)
+
+## Retrieve users V1 (**Deprecated**)
+
+### Retrieve users by ID (**Deprecated**)
+
+```javascript
+const params = {
+  page: 1,
+  per_page: 5,
+  filter: {
+    field: "id",
+    param: "in",
+    value: [51941, 51946],
+  },
+};
+
+ConnectyCube.users
+  .get(params)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+Response example from `ConnectyCube.users.get(params)` - [see](/server/users#response-1)
+
+### Retrieve user by login (**Deprecated**)
+
+```javascript
+const searchParams = { login: "marvin18" };
+
+ConnectyCube.users
+  .get(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+### Retrieve user by email (**Deprecated**)
+
+```javascript
+const searchParams = { email: "marvin18@example.com" };
+
+ConnectyCube.users
+  .get(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+### Retrieve users by full name (**Deprecated**)
+
+```javascript
+const searchParams = { full_name: "Marvin Samuel" };
+
+ConnectyCube.users
+  .get(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+### Retrieve user by phone number (**Deprecated**)
+
+```javascript
+const searchParams = { phone: "44678162873" };
+
+ConnectyCube.users
+  .get(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+### Retrieve user by external ID (**Deprecated**)
+
+```javascript
+const searchParams = { external_user_id: "675373912" };
+
+ConnectyCube.users
+  .get(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+### Retrieve users by tags (**Deprecated**)
+
+```javascript
+const searchParams = { tags: ["apple"] };
+
+ConnectyCube.users
+  .get(searchParams)
+  .then((result) => {})
+  .catch((error) => {});
+```
+
+## Delete user
+
+A user can delete himself from the platform:
+
+```javascript
+ConnectyCube.users
+  .delete()
+  .then((result) => {})
+  .catch((error) => {});
+```

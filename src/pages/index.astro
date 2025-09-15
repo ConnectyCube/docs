@@ -1,0 +1,49 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import {
+	guides,
+	mainFeatures,
+	chatFeatureOverview,
+	callsFeatureOverview,
+} from '../data';
+import CardsGroup from '../components/CardsGroup.astro';
+import HomeBottomSection from '../components/HomeBottomSection.astro';
+import MainFeatureCardsGroup from '../components/MainFeatureCardsGroup.astro';
+import FeatureOverview from '../components/feature-overview/FeatureOverview.astro';
+import CustomHomePageFooter from '../components/HomePageFooter.astro';
+import '../styles/custom.css';
+import '../fonts/font-face.css';
+---
+
+<StarlightPage
+	frontmatter={{
+		title: 'ConnectyCube Developers Documentation',
+		description:
+			'Guides for quick and easy integration of ConnectyCube Chat and Calls for Flutter, React Native, Web, Cordova, NativeScript, iOS and Android',
+		tableOfContents: false,
+		head: [
+			{
+				tag: 'title',
+				content: 'ConnectyCube: API documentation and tutorials',
+			},
+		],
+		hero: {
+			tagline: 'Powerful SDKs and APIs for Chat, Calls, and Chat Widget',
+		},
+	}}
+	hasSidebar={false}
+>
+	<MainFeatureCardsGroup data={mainFeatures} />
+	<FeatureOverview data={chatFeatureOverview} />
+	<FeatureOverview data={callsFeatureOverview} />
+	<CardsGroup
+		title="Guides"
+		anchor="guides"
+		subtitle="Simplify your tasks with our easy-to-follow, step-by-step guides, covering a wide range of topics to help you tackle any challenge."
+		data={guides}
+		className="cards-secondary"
+	/>
+	<HomeBottomSection />
+</StarlightPage>
+
+<CustomHomePageFooter />

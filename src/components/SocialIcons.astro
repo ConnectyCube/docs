@@ -1,0 +1,74 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import BxlMediumSquare from '~icons/bxl/medium-square';
+import { Icon } from '@astrojs/starlight/components';
+---
+
+<div class="icons-container">
+	<a
+		href="https://medium.com/@connectycube"
+		class="sl-flex link"
+		rel="me"
+		target="_blank"
+	>
+		<span class="sr-only">Medium</span>
+		<BxlMediumSquare class="icon" aria-hidden width="16" height="16" />
+	</a>
+	<a
+		href="https://github.com/ConnectyCube"
+		class="sl-flex link"
+		rel="me"
+		target="_blank"
+	>
+		<span class="sr-only">Github</span>
+		<Icon name="github" label="Github" class="icon" />
+	</a>
+	<a
+		href="https://www.linkedin.com/company/connectycube"
+		class="sl-flex link"
+		rel="me"
+		target="_blank"
+	>
+		<span class="sr-only">LinkedIn</span>
+		<Icon name="linkedin" label="LinkedIn" class="icon" />
+	</a>
+	<a
+		href="https://twitter.com/connectycube"
+		class="sl-flex link"
+		rel="me"
+		target="_blank"
+	>
+		<span class="sr-only">Twitter</span>
+		<Icon name="x.com" label="X" class="icon" />
+	</a>
+	<a
+		href="https://www.facebook.com/ConnectyCube"
+		class="sl-flex link"
+		rel="me"
+		target="_blank"
+	>
+		<span class="sr-only">Facebook</span>
+		<Icon name="facebook" label="Facebook" class="icon" />
+	</a>
+</div>
+
+<style>
+	.icons-container {
+		display: flex;
+		align-items: center;
+	}
+	.link {
+		padding: 0.5rem;
+	}
+
+	.icon {
+		width: 16px;
+		height: 16px;
+		cursor: pointer;
+		color: var(--sl-color-text-accent);
+	}
+
+	.icon:hover {
+		opacity: 0.66;
+	}
+</style>

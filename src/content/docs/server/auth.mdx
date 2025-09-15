@@ -1,0 +1,242 @@
+---
+title: Authentication and Authorization API
+description: Discover ConnectyCube's Authentication and Authorization API for secure access to functionalities. Fortify your app's defenses and protect user data effectively.
+head:
+  - tag: title
+    content: Authentication and Authorization API | Connectycube
+sidebar: 
+    label: Auth
+    order: 2
+---
+
+Every user has to authenticate with ConnectyCube before using any ConnectyCube functionality.
+
+When someone connects with an application using ConnectyCube, the application will need to obtain a session token which provides temporary, secure access to ConnectyCube APIs. **By default, session token is valid for 2 hours**. Any API request prolongs the token validity for another 2 hours.
+
+A session token is an opaque string that identifies a user and an application.
+
+## Create session token
+
+As a starting point, the user’s session token needs to be created allowing user any further actions within the app. Pass login/email and password to identify a user:
+
+###### Endpoint
+
+```
+POST https://api.connectycube.com/session
+```
+
+###### Parameters
+
+| Parameter                    |          Required           | Description                                                           |
+| ---------------------------- | :-------------------------: | --------------------------------------------------------------------- |
+| user[login]                  |            Yes\*            | User's login                                                          |
+| user[email]                  |            Yes\*            | User's email                                                          |
+| user[password]               |             Yes             | User's Password                                                       |
+| provider                     |          Optional           | Possible values: **facebook**, **twitter**, **firebase_phone**, **firebase_email**        |
+| keys[token]                  |          Optional           | Social network provider's access token                                |
+| keys[secret]                 | Optional, for Twitter only  | Social network provider's access token secret                         |
+| firebase_phone[project_id]   | Optional, for Firebase only | Firebase project ID - the unique identifier for your Firebase project |
+| firebase_phone[access_token] | Optional, for Firebase only | Firebase user's ID token                                              |
+| firebase_email[project_id]   | Optional, for Firebase only | Firebase project ID - the unique identifier for your Firebase project |
+| firebase_email[access_token] | Optional, for Firebase only | Firebase user's ID token                                              |
+
+There are four available sets of data to specify when create a session with a user:
+
+- `login` and `password`
+- `email` and `password`
+- `provider` + `keys[token]` and `keys[secret]` - when sign up with Facebook or Twitter
+- `provider` + `firebase_phone[project_id]` and `firebase_phone[access_token]` - when sign up with a phone number
+- `provider` + `firebase_email[project_id]` and `firebase_email[access_token]` - when sign up with a email
+
+###### Request example
+
+```bash
+curl -X POST \
+-H "Content-Type: application/json" \
+-d '{"application_id": "1", "auth_key": "29WfrNWdvkhmX6V", "timestamp": "1544010993", "user":{"login": "john", "password": "11111111"}}' \
+https://api.connectycube.com/session
+```
+
+###### Response
+
+```json
+{
+    "session": {
+        "id": 111,
+        "user_id": 111,
+        "application_id": 1,
+        "token": "83153a14fb2df777c2f866178902a4bb15000001",
+        "ts": 1544010993,
+        "created_at": "2018-12-05T11:58:02Z",
+        "updated_at": "2018-12-05T11:58:02Z",
+        "user": {
+            "id": 81,
+            "full_name": "John Smith",
+            "email": "johnsmith@domain.com",
+            "login": "john",
+            "phone": "380665787842",
+            "website": null,
+            "created_at": "2018-06-15T14:20:54Z",
+            "updated_at": "2018-12-05T11:58:02Z",
+            "last_request_at": "2018-12-05T11:58:02Z",
+            "external_user_id": null,
+            "facebook_id": null,
+            "twitter_id": null,
+            "custom_data": "",
+            "blob_id": null,
+            "avatar": "",
+            "user_tags": null
+        }
+    }
+}
+```
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+
+## Create session with Guest User
+
+Session can be created with temporary guest user, user will be automatically created, session with guest user **valid for 1 day** after user will be automatically deleted.    
+**NOTE:** Guest user can't be authorized by login/email password
+
+###### Parameters
+
+| Parameter                    |          Required           | Description                                                           |
+| ---------------------------- | :-------------------------: | --------------------------------------------------------------------- |
+| user[guest]                  |             No              | Define creating session with temporary guest user                     |
+| user[full_name]              |             No              | Set guest user **full_name**                                          |
+
+###### Request example
+
+```bash
+curl -X POST \
+-H "Content-Type: application/json" \
+-d '{"application_id": "1", "auth_key": "29WfrNWdvkhmX6V", "timestamp": "1678966390", "user":{"guest": "1", "full_name": "Olof Shodger"}}' \
+https://api.connectycube.com/session
+```
+
+###### Response
+
+```json
+{
+    "session": {
+        "application_id": 1,
+        "token": "3E5CDBE3743E33DC820E012BF81BCD77ABFF",
+        "created_at": "2023-03-16T11:33:10Z",
+        "updated_at": "2023-03-16T11:33:10Z",
+        "ts": 1678966390,
+        "user_id": 900265,
+        "id": 900265,
+        "user": {
+            "_id": "6412fe76d6600d1d3d67877d",
+            "id": 900265,
+            "created_at": "2023-03-16T11:33:10Z",
+            "updated_at": "2023-03-16T11:33:10Z",
+            "login": "guest_login_328A465366359BDDB984904D49EAD187B524",
+            "full_name": "Olof Shodger",
+            "is_guest": true,
+            "last_request_at": null,
+            "timezone": null,
+            "email": null,
+            "phone": "",
+            "website": null,
+            "twitter_id": null,
+            "external_user_id": null,
+            "facebook_id": null,
+            "custom_data": null,
+            "user_tags": null,
+            "avatar": null,
+            "external_id": null
+        }
+    }
+}
+```
+
+## Get information about session
+
+Retriving information about the current (active) session from token specified as a header.
+
+###### Endpoint
+
+```
+GET https://api.connectycube.com/session
+```
+
+###### Request example
+
+```bash
+curl -X GET \
+-H "CB-Token:  <TOKEN> "\
+https://api.connectycube.com/session
+```
+
+###### Response
+
+```json
+{
+  "session": {
+    "id": 219606,
+    "user_id": 47592,
+    "application_id": 212,
+    "token": "66e8aef2757404f3c7c2488f17ebdd8b8a0000d4",
+    "ts": 1544083714,
+    "created_at": "2018-12-06T08:08:35Z",
+    "updated_at": "2018-12-06T08:08:35Z",
+    "user": {
+      "id": 47592,
+      "full_name": "John Smith",
+      "email": "johnsmith@gmail.com",
+      "login": "johnsmith",
+      "phone": null,
+      "website": null,
+      "created_at": "2018-11-23T09:42:36Z",
+      "updated_at": "2018-12-06T08:08:35Z",
+      "last_request_at": "2018-12-06T08:08:35Z",
+      "external_user_id": null,
+      "facebook_id": null,
+      "twitter_id": null,
+      "blob_id": null,
+      "custom_data": null,
+      "avatar": null,
+      "user_tags": null
+    }
+  }
+}
+```
+
+## Destroy session
+
+The request destroys all of the data associated with the current session.
+
+###### Endpoint
+
+```
+DELETE https://api.connectycube.com/session
+```
+
+###### Request example
+
+```bash
+curl -X DELETE \
+-H "CB-Token:  <TOKEN> "\
+https://api.connectycube.com/session
+```
+
+###### Response
+
+```
+Status: 200
+```

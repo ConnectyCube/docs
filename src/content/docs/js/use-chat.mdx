@@ -1,0 +1,98 @@
+---
+title: use-chat React hook
+description: Simplify chat app state management with use-chat lightweight React hook for real-time chat.
+head:
+  - tag: title
+    content: React hook for state management in chat apps | ConnectyCube
+sidebar: 
+    label: use-chat
+    order: 15
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+**use-chat** is a React hook for state management in ConnectyCube-powered chat solutions.
+
+This library provides a headless solution for managing chat functionality in ConnectyCube. Similar to how Formik simplifies form handling, this library streamlines the development of chat applications.
+
+The core purpose is to handle essential chat features like state management, handling subsequent events and APIs properly etc, so the end user takes care about UI building only.
+
+## Features
+
+- Handle chats and messages states, including the currently active conversation
+- Manage chat participants states
+- Maintain typing indicators and users last activity.
+- Support attachments download
+- Message drafts
+- Moderation via user reporting and block
+
+## Installation
+
+```
+npm install @connectycube/use-chat
+```
+
+or
+
+```
+yarn add @connectycube/use-chat
+```
+
+## Usage
+
+```ts
+import { useChat } from "@connectycube/use-chat";
+
+const MyComponent = () => {
+  const { connect, createChat, sendMessage, selectedDialog } = useChat();
+
+  const handleConnect = async () => {
+    const chatCredentials = {
+      userId: 22,
+      password: "password",
+    };
+    await connect(chatCredentials);
+  };
+
+  const handleCreateChat = async () => {
+    const userId = 456;
+    const dialog = await createChat(userId);
+    await selectDialog(dialog);
+  };
+
+  const handleSendMessage = async () => {
+    // send message to selected dialog
+    sendMessage("Hi there");
+  };
+
+  return (
+    <div className="container">
+      <button type="button" onClick={handleConnect}>
+        Connect
+      </button>
+      <button type="button" onClick={handleCreateChat}>
+        Create chat
+      </button>
+      <button type="button" onClick={handleSendMessage}>
+        Send message
+      </button>
+    </div>
+  );
+};
+
+export default MyComponent;
+```
+
+For more complex example please check [React chat code sample](https://github.com/ConnectyCube/connectycube-web-samples/tree/master/chat-react)
+
+## API
+
+Check types for more API examples https://github.com/ConnectyCube/use-chat/blob/main/src/types/index.ts
+
+## Have an issue?
+
+Join our [Discord](https://discord.com/invite/zqbBWNCCFJ) for quick answers to your questions
+
+## Changelog
+
+[https://github.com/ConnectyCube/use-chat/blob/main/CHANGELOG.md](https://github.com/ConnectyCube/use-chat/blob/main/CHANGELOG.md)

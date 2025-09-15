@@ -1,0 +1,3470 @@
+---
+title: Chat
+description: Integrate powerful chat functionality into your Android app effortlessly with our versatile Chat APIs. Enhance user communication and engagement.
+head:
+  - tag: title
+    content: Android Chat APIs | ConnectyCube
+sidebar:
+  label: Chat
+  order: 4
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+ConnectyCube Chat API is built on top of Real-time(XMPP) protocol.
+In order to use it you need to setup real-time connection with ConnectyCube Chat server and use it to exchange data.
+
+By default Real-time Chat works over secure TLS connection.
+
+## Connect to chat
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val user = ConnectycubeUser().apply {
+    id = 21
+    password = "supersecurepwd"
+}
+// or just
+val user = user {
+	id = 21
+	password = "supersecurepwd"
+}
+ConnectyCube.chat.login(user, {}, { ex -> Log.d(tag, "login ex= $ex") })
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// Provide chat connection configuration
+val chatServiceConfigurationBuilder = ConfigurationBuilder().apply {
+    socketTimeout = 60
+    isKeepAlive = true
+    isUseTls = true //By default TLS is disabled.
+}
+
+ConnectycubeChatService.setConnectionFabric(TcpChatConnectionFabric(chatServiceConfigurationBuilder))
+
+val chatService = ConnectycubeChatService.getInstance()
+
+val user = ConnectycubeUser().apply {
+id = 21
+password = "supersecurepwd"
+}
+
+chatService.login(user, object : EntityCallback<Void?> {
+override fun onError(error: ResponseException) {
+
+    }
+
+    override fun onSuccess(result: Void?, args: Bundle) {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// Provide chat connection configuration
+ConnectycubeChatService.ConfigurationBuilder chatServiceConfigurationBuilder = new ConnectycubeChatService.ConfigurationBuilder();
+chatServiceConfigurationBuilder.setSocketTimeout(60);
+chatServiceConfigurationBuilder.setKeepAlive(true);
+chatServiceConfigurationBuilder.setUseTls(true); //By default TLS is disabled.
+ConnectycubeChatService.setConfigurationBuilder(chatServiceConfigurationBuilder);
+
+ConnectycubeChatService chatService = ConnectycubeChatService.getInstance();
+
+final ConnectycubeUser user = new ConnectycubeUser();
+user.setId(21);
+user.setPassword("supersecurepwd");
+
+chatService.login(user, new EntityCallback() {
+    @Override
+    public void onSuccess() {
+
+    }
+
+    @Override
+    public void onError(ResponseException errors) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+Use **ConnectionListener** to handle different connection states:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addConnectionListener(object : ConnectycubeConnectionListener {
+    override fun onConnected() {
+    }
+
+    override fun onDisconnected() {
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val connectionListener: ConnectionListener = object : ConnectionListener {
+    override fun connected(connection: XMPPConnection) {
+
+    }
+
+    override fun connectionClosed() {
+
+    }
+
+    override fun connectionClosedOnError(e: Exception) {
+
+    }
+
+    override fun reconnectingIn(seconds: Int) {
+
+    }
+
+    override fun reconnectionSuccessful() {
+
+    }
+
+    override fun authenticated(connection: XMPPConnection, resumed: Boolean) {
+
+    }
+
+    override fun reconnectionFailed(e: Exception) {
+
+    }
+}
+
+ConnectycubeChatService.getInstance().addConnectionListener(connectionListener)
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectionListener connectionListener = new ConnectionListener() {
+    @Override
+    public void connected(XMPPConnection connection) {
+
+    }
+
+    @Override
+    public void authenticated(XMPPConnection connection) {
+
+    }
+
+    @Override
+    public void connectionClosed() {
+
+    }
+
+    @Override
+    public void connectionClosedOnError(Exception e) {
+
+    }
+
+    @Override
+    public void reconnectingIn(int seconds) {
+
+    }
+
+    @Override
+    public void reconnectionSuccessful() {
+
+    }
+
+    @Override
+    public void reconnectionFailed(Exception e) {
+
+    }
+
+};
+
+ConnectycubeChatService.getInstance().addConnectionListener(connectionListener);
+
+````
+
+</TabItem>
+</Tabs>
+
+### Connect to chat using custom authentication providers
+
+In some cases we don't have a user's password, for example when login via:
+* Facebook
+* Twitter
+* Firebase phone authorization
+* Custom identity authentication
+* etc.
+
+In such cases ConnectyCube API provides possibility to use ConnectyCube session token as a password for chat connection:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val token = ConnectycubeSessionManager.getToken()
+
+val user = ConnectycubeUser().apply {
+    id = 21
+    password = token
+}
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// get current ConnectyCube session token and set as user's password
+val token = ConnectycubeSessionManager.getInstance().token
+
+val user = ConnectycubeUser().apply {
+id = 21
+password = token
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// get current ConnectyCube session token and set as user's password
+String token = ConnectycubeSessionManager.getInstance().getToken();
+
+final ConnectycubeUser user = new ConnectycubeUser();
+user.setId(21);
+user.setPassword(token);
+````
+
+</TabItem>
+</Tabs>
+
+## Disconnect
+
+To **logout from chat** connection use logout method:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val isLoggedIn = ConnectyCube.chat.isLoggedIn()
+if (!isLoggedIn) {
+    return
+}
+
+ConnectyCube.chat.logout({}, { ex -> Log.d(tag, "logout ex= $ex") })
+
+````
+
+</TabItem>
+
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val isLoggedIn = chatService.isLoggedIn
+if (!isLoggedIn) {
+    return
+}
+
+chatService.logout(object : EntityCallback<Void?> {
+    override fun onError(error: ResponseException) {
+
+    }
+
+    override fun onSuccess(result: Void?, args: Bundle) {
+
+    }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+boolean isLoggedIn = chatService.isLoggedIn();
+if(!isLoggedIn){
+    return;
+}
+
+chatService.logout(new EntityCallback() {
+@Override
+public void onSuccess() {
+
+    }
+
+    @Override
+    public void onError(ResponseException errors) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+To **fully destroy** chat connection use destroy method:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.destroy()
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+chatService.destroy()
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+chatService.destroy();
+```
+
+</TabItem>
+</Tabs>
+
+## Reconnection
+
+The SDK reconnects automatically when connection to Chat server is lost.
+
+There is a way to disable it and then manage it manually:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+ConnectycubeChatService.getInstance().isReconnectionAllowed = false
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatService.getInstance().setReconnectionAllowed(false);
+```
+
+</TabItem></Tabs>
+
+## Dialogs
+
+All chats between users are organized in dialogs.
+The are 4 types of dialogs:
+
+- 1-1 chat - a conversation between 2 users.
+- group chat - a conversation between specified list of users.
+- public chat - an open conversation. Any user from your app can subscribe to it.
+- broadcast - chat where a message is sent to all users within application at once.
+  All the users from the application are able to join this group. Broadcast dialogs can be created only via Admin panel.
+
+You need to create a new dialog and then use it to chat with other users. You also can obtain a list of your existing dialogs.
+
+## Create new dialog
+
+### Create 1-1 chat
+
+You need to pass `ConnectycubeDialogType.PRIVATE` as a type and an id of an opponent you want to create a chat with:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialog = ConnectycubeDialog(type = ConnectycubeDialogType.PRIVATE, occupantsIds = occupantIds)
+ConnectyCube.createDialog(cubeDialog, { dialog ->
+
+}, { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val occupantIds = ArrayList<Int>().apply {
+    add(34)
+}
+
+val dialog = ConnectycubeChatDialog().apply {
+    type = ConnectycubeDialogType.PRIVATE
+    setOccupantsIds(occupantIds)
+}
+
+// or just use DialogUtils
+// val dialog = DialogUtils.buildPrivateDialog(34)
+
+ConnectycubeRestChatService.createChatDialog(dialog)
+    .performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+        override fun onSuccess(createdDialog: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(exception: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ArrayList<Integer> occupantIds = new ArrayList<Integer>();
+occupantIds.add(34);
+
+ConnectycubeChatDialog dialog = new ConnectycubeChatDialog();
+dialog.setType(ConnectycubeDialogType.PRIVATE);
+dialog.setOccupantsIds(occupantIds);
+
+//or just use DialogUtils
+//ConnectycubeChatDialog dialog = DialogUtils.buildPrivateDialog(recipientId);
+
+ConnectycubeRestChatService.createChatDialog(dialog).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+@Override
+public void onSuccess(ConnectycubeChatDialog createdDialog, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException exception) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+### Create group chat
+
+You need to pass `ConnectycubeDialogType.GROUP` as a type and ids of opponents you want to create a chat with:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialog = ConnectycubeDialog( type = ConnectycubeDialogType.GROUP, name = "Hawaii party", occupantsIds = occupantIds)
+ConnectyCube.createDialog(cubeDialog, { dialog ->
+
+}, { error ->
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val occupantIds = ArrayList<Int>().apply {
+    add(34)
+    add(35)
+    add(36)
+}
+
+val dialog = ConnectycubeChatDialog().apply {
+type = ConnectycubeDialogType.GROUP
+name = "Hawaii party"
+// photo = "..."
+// description = "..."
+setOccupantsIds(occupantIds)
+}
+
+//or just use DialogUtils
+//val dialog = DialogUtils.buildDialog("Hawaii party", ConnectycubeDialogType.GROUP, occupantIds).apply {
+// photo = "..."
+// description = "..."
+//}
+
+ConnectycubeRestChatService.createChatDialog(dialog)
+.performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+override fun onSuccess(createdDialog: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(exception: ResponseException) {
+
+        }
+    })
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ArrayList<Integer> occupantIds = new ArrayList<Integer>();
+occupantIds.add(34);
+occupantIds.add(35);
+occupantIds.add(36);
+
+ConnectycubeChatDialog dialog = new ConnectycubeChatDialog();
+dialog.setType(ConnectycubeDialogType.GROUP);
+dialog.setOccupantsIds(occupantIds);
+dialog.setName("Hawaii party");
+//dialog.setPhoto("...");
+//dialog.setDescription("...");
+
+//or just use DialogUtils
+//ConnectycubeChatDialog dialog = DialogUtils.buildDialog("Hawaii party", ConnectycubeDialogType.GROUP, occupantIds);
+
+ConnectycubeRestChatService.createChatDialog(dialog).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+    @Override
+    public void onSuccess(ConnectycubeChatDialog createdDialog, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException exception) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+### Create public chat
+
+It's possible to create a public chat, so any user from your application can subscribe to it.
+You need to pass `ConnectycubeDialogType.PUBLIC` as a type to create a chat with:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialog = ConnectycubeDialog(type = ConnectycubeDialogType.PUBLIC, name = "Blockchain trends")
+ConnectyCube.createDialog(cubeDialog, { dialog ->
+
+}, { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val dialog = ConnectycubeChatDialog().apply {
+    type = ConnectycubeDialogType.PUBLIC
+    name = "Blockchain trends"
+//  photo = "..."
+//  description = "..."
+}
+
+ConnectycubeRestChatService.createChatDialog(dialog)
+    .performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+        override fun onSuccess(createdDialog: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(exception: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatDialog dialog = new ConnectycubeChatDialog();
+dialog.setType(ConnectycubeDialogType.PUBLIC);
+dialog.setName("Blockchain trends");
+//dialog.setPhoto("...");
+//dialog.setDescription("...");
+
+ConnectycubeRestChatService.createChatDialog(dialog).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+@Override
+public void onSuccess(ConnectycubeChatDialog createdDialog, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException exception) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+With public dialog ID any a user can subscribe to the public dialog via the following code:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.subscribeToDialog(dialogId, { dialog ->
+}, { error ->
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+ConnectycubeRestChatService.subscribePublicDialog(dialogID)
+    .performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+        override fun onSuccess(dialog: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(responseException: ResponseException) {
+
+        }
+    })
+
+````
+
+</TabItem>
+
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeRestChatService.subscribePublicDialog(dialogID).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+    @Override
+    public void onSuccess(ConnectycubeChatDialog dialog, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException responseException) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+After dialog subscription, this dialog will be listed in retrieve dialogs request and you also will be able to chat in it.
+
+You also can unsubscribe if you do not want to be in this public dialog anymore:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.unSubscribeFromDialog(dialogId, { 
+}, { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+ConnectycubeRestChatService.unsubscribePublicDialog(dialogID)
+    .performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+        override fun onSuccess(result: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(responseException: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeRestChatService.unsubscribePublicDialog(dialogID).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+    @Override
+    public void onSuccess(ConnectycubeChatDialog result, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException responseException) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+### Chat metadata
+
+A dialog can have up to 3 custom sub-fields to store additional information that can be linked to chat. 
+
+To start using extensions, allowed fields should be added first. Go to [Admin panel](https://admin.connectycube.com) > Chat > Custom Fields and provide allowed custom fields.
+
+![Dialog Extensions fields configuration example](../../../assets/rest_api/dialog_custom_params.png)
+
+When create a dialog, the `extensions` field object must contain allowed fields only. Others fields will be ignored. The values will be casted to string.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialog = ConnectycubeDialog(ConnectycubeDialogType.GROUP)
+dialog.name = "Friday party"
+dialog.occupantsIds = arrayListOf(29085, 29086, 29087)
+dialog.description = "lets dance the night away"
+dialog.extensions = hashMapOf("location" to "Sun bar")
+
+ConnectyCube.createDialog(dialog, { createdDialog -> }, { error -> })
+```
+
+</TabItem>
+</Tabs>
+
+When remove custom field in Admin panel, this field will be removed in all dialogs respectively.
+
+These parameters also can be used as a filter for retrieving dialogs.
+
+### Chat permissions
+
+Chat could have different permissions to managa data access. This is managed via `permissions` field.
+
+At the moment, only one permission available - `allow_preview` - which allows to retrieve dialog's messages for user who is not a member of dialog. This is useful when implement feature like Channels where a user can open chat and preview messages w/o joining it.
+
+> **Note**
+>
+> To preview messages w/o joining to dialog pass `preview` operator in request to get messages.
+
+## Retrieve list of dialogs
+
+It's common to request all your conversations on every app login:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val params: HashMap<String, Any> = hashMapOf(
+    "limit" to 50,
+    "skip" to 100
+)
+ConnectyCube.getDialogs(params, successCallback = { resultDialogs ->
+
+}, errorCallback = { error ->
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val requestBuilder = RequestGetBuilder().apply {
+    limit = 50
+    skip = 100
+//  sortAsc(Consts.DIALOG_LAST_MESSAGE_DATE_SENT_FIELD_NAME)
+}
+
+ConnectycubeRestChatService.getChatDialogs(null as ConnectycubeDialogType, requestBuilder)
+.performAsync(object : EntityCallback<ArrayList<ConnectycubeChatDialog>> {
+override fun onSuccess(dialogs: ArrayList<ConnectycubeChatDialog>, params: Bundle) {
+val totalEntries = params.getInt(Consts.TOTAL_ENTRIES)
+}
+
+        override fun onError(exception: ResponseException) {
+
+        }
+    })
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RequestGetBuilder requestBuilder = new RequestGetBuilder();
+requestBuilder.setLimit(50);
+requestBuilder.setSkip(100);
+//requestBuilder.sortAsc(Consts.DIALOG_LAST_MESSAGE_DATE_SENT_FIELD_NAME);
+
+ConnectycubeRestChatService.getChatDialogs((ConnectycubeDialogType)null, requestBuilder).performAsync(new EntityCallback<ArrayList<ConnectycubeChatDialog>>() {
+    @Override
+    public void onSuccess(ArrayList<ConnectycubeChatDialog> dialogs, Bundle params) {
+        int totalEntries = params.getInt(Consts.TOTAL_ENTRIES);
+    }
+
+    @Override
+    public void onError(ResponseException exception) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+It will return all your 1-1 dialogs, group dialog and also public dialogs your are subscribed to.
+
+If you want to retrieve only conversations updated after some specific date time, you can use `requestBuilder.gt("updated_at", "1455098137");` filter. This is useful if you cache conversations somehow and do not want to obtain the whole list of your conversations on every app start.
+
+## Update dialog’s name, description, photo
+
+User can update group chat name, description, photo:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val params = UpdateDialogParams() //class-helper to simple config search request
+params.newName = "Hawaii party"
+params.newPhoto = "https://new_photo_url"
+params.newDescription = "New dialog description"
+
+ConnectyCube.updateDialog(dialogId, params.getUpdateDialogParams(), successCallback = { resultDialog ->
+
+}, errorCallback = { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val dialog = ConnectycubeChatDialog().apply {
+    dialogId = "5356c64ab35c12bd3b108a41"
+    name = "Hawaii party"
+    photo = "https://new_photo_url" // or it can be an ID to some file in Storage module
+    description = "New dialog description"
+}
+
+ConnectycubeRestChatService.updateChatDialog(dialog, null)
+    .performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+        override fun onSuccess(updatedDialog: ConnectycubeChatDialog, bundle: Bundle) {
+
+        }
+
+        override fun onError(error: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatDialog dialog = new ConnectycubeChatDialog();
+dialog.setDialogId("5356c64ab35c12bd3b108a41");
+dialog.setName("Hawaii party");
+dialog.setPhoto("https://new_photo_url"); // or it can be an ID to some file in Storage module
+dialog.setDescription("New dialog description");
+
+ConnectycubeRestChatService.updateChatDialog(dialog, null).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+@Override
+public void onSuccess(ConnectycubeChatDialog updatedDialog, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onError(ResponseException error) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+## Add/Remove occupants
+You can add/remove occupants in group and public dialogs:
+
+<Tabs syncKey="codeExamples"><TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val params = UpdateDialogParams()
+params.addOccupantIds = hashSetOf(378)
+//  params.deleteOccupantIds = hashSetOf(22)
+
+ConnectyCube.updateDialog(dialogId, params.getUpdateDialogParams(), successCallback = { resultDialog ->
+
+}, errorCallback = { error ->
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val requestBuilder = DialogRequestBuilder().apply {
+    addUsers(378)
+//  removeUsers(22)
+}
+
+val dialog = ConnectycubeChatDialog("5356c64ab35c12bd3b108a41")
+
+ConnectycubeRestChatService.updateChatDialog(dialog, requestBuilder)
+.performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+override fun onSuccess(updatedDialog: ConnectycubeChatDialog, bundle: Bundle) {
+
+        }
+
+        override fun onError(error: ResponseException) {
+
+        }
+    })
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+DialogRequestBuilder requestBuilder = new DialogRequestBuilder();
+requestBuilder.addUsers(378);
+// requestBuilder.removeUsers(22);
+
+ConnectycubeChatDialog dialog = new ConnectycubeChatDialog();
+dialog.setDialogId("5356c64ab35c12bd3b108a41");
+
+ConnectycubeRestChatService.updateChatDialog(dialog, requestBuilder).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+    @Override
+    public void onSuccess(ConnectycubeChatDialog updatedDialog, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onError(ResponseException error) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+> **Note**
+>
+> Only group chat owner and admins can remove other users from group chat.
+
+## Add / Remove admins
+
+Admins it's a special role in chats.
+They have the same permissions as a dialog's creator except add/remove other admins and remove dialog.
+
+Owner of the group chat dialog can add admins:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val params = UpdateDialogParams()
+params.addAdminIds = hashSetOf(17616, 17617)
+
+ConnectyCube.updateDialog(dialogId, params.getUpdateDialogParams(), successCallback = { resultDialog ->
+
+}, errorCallback = { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val updateBuilder = DialogRequestBuilder().apply {
+    addAdminsIds(17616, 17617)
+}
+
+ConnectycubeRestChatService.updateChatDialog(groupDialog, updateBuilder)
+    .performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+        override fun onSuccess(result: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(responseException: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+DialogRequestBuilder updateBuilder = new DialogRequestBuilder();
+updateBuilder.addAdminsIds(17616, 17617);
+ConnectycubeRestChatService.updateChatDialog(groupDialog, updateBuilder).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+    @Override
+    public void onSuccess(ConnectycubeChatDialog result, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException responseException) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+and remove:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val params = UpdateDialogParams()
+params.deleteAdminIds = hashSetOf(17616, 17617)
+
+ConnectyCube.updateDialog(dialogId, params.getUpdateDialogParams(), successCallback = { resultDialog ->
+
+}, errorCallback = { error ->
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val updateBuilder = DialogRequestBuilder().apply {
+    removeAdminsIds(17616, 17617)
+}
+
+ConnectycubeRestChatService.updateChatDialog(groupDialog, updateBuilder)
+.performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+override fun onSuccess(result: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(responseException: ResponseException) {
+
+        }
+    })
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+DialogRequestBuilder updateBuilder = new DialogRequestBuilder();
+updateBuilder.removeAdminsIds(17616, 17617);
+ConnectycubeRestChatService.updateChatDialog(groupDialog, updateBuilder).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+    @Override
+    public void onSuccess(ConnectycubeChatDialog result, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException responseException) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+## Pin messages
+
+Pinning a message allows group owner or chat admins to easily store messages which are important, so that all users in chat have a quick access to them. The following code pins some messages to a particular group dialog:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val params = UpdateDialogParams()
+params.addPinnedMsgIds = hashSetOf("5356c64ab35c12bd3b10ba32", "5356c64ab35c12bd3b10wa65")
+//  params.deletePinnedMsgIds = hashSetOf("5356c64ab35c12bd3b10ba32", "5356c64ab35c12bd3b10wa65")
+
+ConnectyCube.updateDialog(dialogId, params.getUpdateDialogParams(), successCallback = { resultDialog ->
+
+}, errorCallback = { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val updateBuilder = DialogRequestBuilder().apply {
+    addPinnedMessagesIds(
+        "5356c64ab35c12bd3b10ba32",
+        "5356c64ab35c12bd3b10wa65"
+    )
+//    removePinnedMessagesIds(
+//        "5356c64ab35c12bd3b10ba32",
+//        "5356c64ab35c12bd3b10wa65"
+//    )
+}
+
+ConnectycubeRestChatService.updateChatDialog(groupDialog, updateBuilder)
+    .performAsync(object : EntityCallback<ConnectycubeChatDialog> {
+        override fun onSuccess(result: ConnectycubeChatDialog, params: Bundle) {
+
+        }
+
+        override fun onError(responseException: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+DialogRequestBuilder updateBuilder = new DialogRequestBuilder();
+updateBuilder.addPinnedMessagesIds("5356c64ab35c12bd3b10ba32", "5356c64ab35c12bd3b10wa65");
+//updateBuilder.removePinnedMessagesIds("5356c64ab35c12bd3b10ba32", "5356c64ab35c12bd3b10wa65");
+ConnectycubeRestChatService.updateChatDialog(groupDialog, updateBuilder).performAsync(new EntityCallback<ConnectycubeChatDialog>() {
+    @Override
+    public void onSuccess(ConnectycubeChatDialog result, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException responseException) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+## Remove dialog
+
+The following snippet is used to delete a conversation:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val forceDelete = false
+ConnectyCube.deleteDialog(dialogId, forceDelete, successCallback = { },
+errorCallback = { })
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val forceDelete = false
+
+ConnectycubeRestChatService.deleteDialog(dialogId, forceDelete)
+.performAsync(object : EntityCallback<Void?> {
+override fun onSuccess(aVoid: Void?, bundle: Bundle) {
+
+        }
+
+        override fun onError(error: ResponseException) {
+
+        }
+    })
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+String dialogId = "5356c64ab35c12bd3b108a41";
+boolean forceDelete = false;
+
+ConnectycubeRestChatService.deleteDialog(dialogId, forceDelete).performAsync(new EntityCallback<Void>() {
+    @Override
+    public void onSuccess(Void aVoid, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onError(ResponseException error) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+This request will remove this conversation for current user, but other users still will be able to chat there.
+**The** `forceDelete` **parameter is used to completely remove the dialog.** Only group chat owner can remove the group conversation for all users.
+
+You can also delete multiple conversations in a single request.
+
+## Chat history
+
+Every chat conversation stores its chat history which you can retrieve:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val messageGetBuilder: GetMessagesParameters = GetMessagesParameters().also { it.limit = 100; it.markAsRead = false; it.sorter = RequestSorter("", "date_sent", "desc")}
+ConnectyCube.getMessages(dialogId, messageGetBuilder.getRequestParameters(), successCallback = { pagedMessagesResult ->
+
+}, errorCallback = { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val chatDialog = ConnectycubeChatDialog("5356c64ab35c12bd3b108a41")
+
+val messageGetBuilder = MessageGetBuilder().apply {
+    limit = 100
+//  gt(Consts.MESSAGE_DATE_SENT, "1455098137")
+}
+
+ConnectycubeRestChatService.getDialogMessages(chatDialog, messageGetBuilder)
+    .performAsync(object : EntityCallback<ArrayList<ConnectycubeChatMessage>> {
+        override fun onSuccess(messages: ArrayList<ConnectycubeChatMessage>, bundle: Bundle) {
+
+        }
+
+        override fun onError(error: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatDialog chatDialog = new ConnectycubeChatDialog("5356c64ab35c12bd3b108a41");
+
+MessageGetBuilder messageGetBuilder = new MessageGetBuilder();
+messageGetBuilder.setLimit(100);
+// messageGetBuilder.gt("date_sent", "1455098137");
+
+ConnectycubeRestChatService.getDialogMessages(chatDialog, messageGetBuilder).performAsync(new EntityCallback<ArrayList<ConnectycubeChatMessage>>() {
+@Override
+public void onSuccess(ArrayList<ConnectycubeChatMessage> messages, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onError(ResponseException error) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+If you want to retrieve chat messages that were sent after or before specific date time only, you can use `messageGetBuilder.gt("date_sent", "1455098137")` or `messageGetBuilder.lt("date_sent", "1455098137")` filter. This is useful if you implement pagination for loading messages in your app.
+
+> **Note**
+>
+> All retrieved chat messages will be marked as read after the request. If you decided not to mark chat messages as read, then add the following parameter to your request: `messageGetBuilder.markAsRead(false);`
+
+## Send/Receive chat messages
+
+### Receive messages
+
+There is `IncomingMessagesManager` to listen for all incoming messages from all dialogs.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addMessageListener(object: ConnectycubeMessageListener {
+    override fun onError(message: ConnectycubeMessage, ex: Throwable) {
+
+    }
+
+    override fun onMessage(message: ConnectycubeMessage) {
+
+    }
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val incomingMessagesManager = chatService.incomingMessagesManager
+
+incomingMessagesManager.addDialogMessageListener(object : ChatDialogMessageListener {
+override fun processMessage(dialogId: String,
+message: ConnectycubeChatMessage,
+senderId: Int)
+{
+
+    }
+
+    override fun processError(dialogId: String,
+                              exception: ChatException,
+                              message: ConnectycubeChatMessage,
+                              senderId: Int)
+    {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+IncomingMessagesManager incomingMessagesManager = chatService.getIncomingMessagesManager();
+
+incomingMessagesManager.addDialogMessageListener(new ChatDialogMessageListener() {
+    @Override
+    public void processMessage(String dialogId, ConnectycubeChatMessage message, Integer senderId) {
+
+    }
+
+    @Override
+    public void processError(String dialogId, ChatException exception, ConnectycubeChatMessage message, Integer senderId) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+> Pay attention, messages from **group & public chat dialogs** will be received in this callback only after you join the dialogs.
+
+> Pay attention, before using dialog you need to init it for ConnectycubeChatService. Call this once you've got dialog -
+`chatDialog.initForChat(ConnectycubeChatService.getInstance())`.
+
+### 1-1 chat
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addMessageListener(object: ConnectycubeMessageListener {
+    override fun onError(message: ConnectycubeMessage, ex: Throwable) {
+
+    }
+
+    override fun onMessage(message: ConnectycubeMessage) {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val privateDialog = ...
+
+val chatMessage = ConnectycubeChatMessage().apply {
+    body = "How are you today?"
+    setSaveToHistory(true)
+}
+
+privateDialog.sendMessage(chatMessage)
+
+privateDialog.addMessageListener(object: ChatDialogMessageListener {
+    override fun processMessage(dialogId: String,
+                                message: ConnectycubeChatMessage,
+                                senderId: Int
+    ) {
+
+    }
+
+    override fun processError(dialogId: String,
+                              exception: ChatException,
+                              message: ConnectycubeChatMessage,
+                              senderId: Int?
+    ) {
+
+    }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    ConnectycubeChatDialog privateDialog = ...;
+
+    ConnectycubeChatMessage chatMessage = new ConnectycubeChatMessage();
+    chatMessage.setBody("How are you today?");
+    chatMessage.setSaveToHistory(true);
+
+    privateDialog.sendMessage(chatMessage);
+
+} catch (SmackException.NotConnectedException e) {
+
+}
+
+privateDialog.addMessageListener(new ChatDialogMessageListener() {
+@Override
+public void processMessage(String dialogId, ConnectycubeChatMessage message, Integer senderId) {
+
+    }
+
+    @Override
+    public void processError(String dialogId, ChatException exception, ConnectycubeChatMessage message, Integer senderId) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+### Group/Public chat
+
+Before you start chatting in a group/public conversation, you need to join it by calling `join` method:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val groupChatDialog = ...
+
+groupChatDialog.join(object : EntityCallback<Void?> {
+    override fun onSuccess(result: Void?, args: Bundle?) {
+
+    }
+
+    override fun onError(exception: ResponseException) {
+
+    }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatDialog groupChatDialog = ...;
+
+groupChatDialog.join(new EntityCallback() {
+@Override
+public void onSuccess(Object o, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onError(ResponseException e) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+Then you are able to send/receive messages:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val chatMessage = ConnectycubeMessage()
+chatMessage.dialogId = dialogId
+chatMessage.saveToHistory = true
+chatMessage.dateSent = System.currentTimeMillis() / 1000
+chatMessage.markable = true
+if(dialog.type == ConnectycubeDialogType.PRIVATE) chatMessage.recipientId = dialog.getRecipientId()
+else chatMessage.type = when (dialog.type) {
+    ConnectycubeDialogType.GROUP, ConnectycubeDialogType.PUBLIC -> ConnectycubeMessageType.Groupchat
+            else -> ConnectycubeMessageType.Chat
+    }
+chatMessage.body = "How are you today?"
+
+ConnectyCube.chat.sendMessage(chatMessage)
+
+ConnectyCube.chat.addMessageListener(object: ConnectycubeMessageListener {
+    override fun onError(message: ConnectycubeMessage, ex: Throwable) {
+
+    }
+
+    override fun onMessage(message: ConnectycubeMessage) {
+
+    }
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val chatMessage = ConnectycubeChatMessage().apply {
+    body = "How are you today?"
+    setSaveToHistory(true)
+}
+
+groupChatDialog.sendMessage(chatMessage)
+
+groupChatDialog.addMessageListener(object : ChatDialogMessageListener {
+override fun processMessage(dialogId: String,
+message: ConnectycubeChatMessage,
+senderId: Int
+) {
+
+    }
+
+    override fun processError(dialogId: String,
+                              exception: ChatException,
+                              message: ConnectycubeChatMessage,
+                              senderId: Int
+    ) {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    ConnectycubeChatMessage chatMessage = new ConnectycubeChatMessage();
+    chatMessage.setBody("How are you today?");
+    chatMessage.setSaveToHistory(true);
+
+    groupChatDialog.sendMessage(chatMessage);
+} catch (SmackException.NotConnectedException e) {
+
+}
+
+groupChatDialog.addMessageListener(new ChatDialogMessageListener() {
+    @Override
+    public void processMessage(String dialogId, ConnectycubeChatMessage message, Integer senderId) {
+
+    }
+
+    @Override
+    public void processError(String dialogId, ChatException exception, ConnectycubeChatMessage message, Integer senderId) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+When it's done, you can leave the group conversation by calling `leave` method:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+groupChatDialog.leave()
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    groupChatDialog.leave();
+    groupChatDialog = null;
+} catch (XMPPException | SmackException.NotConnectedException e) {
+
+}
+
+````
+
+</TabItem>
+</Tabs>
+
+## Message metadata
+
+A chat message can have custom sub-fields to store additional information that can be linked to the particular chat message.
+
+When create a message, the custom data can be attached via `properties` field:
+
+```dart
+val message = ConnectycubeMessage()
+message.properties["field_one"] = "value_one"
+message.properties["field_two"] = "value_two"
+```
+
+## 'Sent' status
+
+There is a 'sent' status to ensure that message is delivered to the server.
+
+In order to use the feature you need to enable it:
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val chatService = ConnectycubeChatService.getInstance()
+
+chatService.setUseStreamManagement(true)
+
+chatService.login(user)
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatService chatService = ConnectycubeChatService.getInstance();
+
+chatService.setUseStreamManagement(true);
+
+chatService.login(user);
+
+````
+
+</TabItem>
+</Tabs>
+
+> Pay attention: you should enable Stream Management before logging into the chat. Stream Management is initialized only during chat login step.
+
+The Stream Management defines an extension for active management of a stream between client and server, including features for stanza acknowledgements.
+
+The following callback is used to track the status:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addMessageSentListener(object: ConnectycubeMessageSentListener {
+    override fun onMessageSent(message: ConnectycubeMessage) {
+
+    }
+
+    override fun onMessageSentFailed(message: ConnectycubeMessage) {
+
+    }
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val messageSentListener = object : ChatDialogMessageSentListener {
+    override fun processMessageSent(dialogId: String,
+                                    message: ConnectycubeChatMessage
+    ) {
+    }
+
+    override fun processMessageFailed(dialogId: String,
+                                      message: ConnectycubeChatMessage
+    ) {
+    }
+
+}
+
+val chatDialog = ...
+chatDialog.addMessageSentListener(messageSentListener)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ChatDialogMessageSentListener messageSentListener = new ChatDialogMessageSentListener() {
+    @Override
+    public void processMessageSent(String dialogId, ConnectycubeChatMessage message) {
+
+    }
+
+    @Override
+    public void processMessageFailed(String dialogId, ConnectycubeChatMessage message) {
+
+    }
+};
+
+ConnectycubeChatDialog chatDialog = ...;
+chatDialog.addMessageSentListener(messageSentListener);
+````
+
+</TabItem>
+</Tabs>
+
+## 'Delivered' status
+
+The following callback is used to track the 'delivered' status:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addMessageStatusListener(object: ConnectycubeMessageStatusListener {
+    override fun onMessageDelivered(message: ConnectycubeMessage) {
+
+    }
+
+    override fun onMessageRead(message: ConnectycubeMessage) {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// call it after chat login
+val messageStatusesManager: MessageStatusesManager = ConnectycubeChatService.getInstance().messageStatusesManager
+
+val messageStatusListener = object : MessageStatusListener {
+    override fun processMessageDelivered(messageId: String,
+                                         dialogId: String,
+                                         userId: Int
+    ) {
+    }
+
+    override fun processMessageRead(messageId: String,
+                                    dialogId: String,
+                                    userId: Int
+    ) {
+    }
+}
+
+messageStatusesManager.addMessageStatusListener(messageStatusListener)
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+private MessageStatusesManager messageStatusesManager;
+private MessageStatusListener messageStatusListener;
+
+// call it after chat login
+messageStatusesManager = ConnectycubeChatService.getInstance().getMessageStatusesManager();
+
+messageStatusListener = new MessageStatusListener() {
+@Override
+public void processMessageDelivered(String messageId, String dialogId, Integer userId) {
+
+    }
+
+    @Override
+    public void processMessageRead(String messageId, String dialogId, Integer userId) {
+
+    }
+
+};
+
+messageStatusesManager.addMessageStatusListener(messageStatusListener);
+
+````
+
+</TabItem>
+</Tabs>
+
+The SDK sends the 'delivered' status automatically when the message is received by the recipient.
+This is controlled by `chatMessage.setMarkable(true)` parameter when you send a message.
+
+If `markable` is `false` or omitted, then you can send the delivered status manually via Chat:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val chatDialog = ...
+val message = ...
+ConnectyCube.chat.sendDeliveredStatus(message)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val chatDialog = ...
+val message = ...
+
+chatDialog.deliverMessage(message)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatMessage message = ...;
+
+try {
+    chatDialog.deliverMessage(message);
+} catch (XMPPException | SmackException.NotConnectedException e) {
+
+}
+````
+
+</TabItem>
+</Tabs>
+
+and via REST
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val updatedParams = UpdateMessageParameters().also { it.delivered = true }
+ConnectyCube.updateMessage(messageId, dialogId, updatedParams.getRequestParameters(), {
+}, { error ->
+})
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val messageUpdateBuilder = MessageUpdateBuilder().apply {
+    markDelivered()
+}
+
+ConnectycubeRestChatService.updateMessage(messageId, dialogId, messageUpdateBuilder)
+.performAsync(object : EntityCallback<Void?> {
+override fun onSuccess(result: Void?, params: Bundle?) {
+
+        }
+
+        override fun onError(responseException: ResponseException) {
+
+        }
+    })
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+MessageUpdateBuilder messageUpdateBuilder = new MessageUpdateBuilder();
+messageUpdateBuilder.markDelivered();
+
+ConnectycubeRestChatService.updateMessage(messageId, dialogId, messageUpdateBuilder).performAsync(new EntityCallback<Void>() {
+    @Override
+    public void onSuccess(Void result, Bundle params) {
+
+    }
+
+    @Override
+    public void onError(ResponseException responseException) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+## 'Read' status
+
+Send the 'read' status:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.sendReadStatus(message)
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+chatDialog.readMessage(chatMessage)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    chatDialog.readMessage(chatMessage);
+} catch (XMPPException | SmackException.NotConnectedException e) {
+
+}
+
+````
+
+</TabItem>
+</Tabs>
+
+Receive the 'read' status callback:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addMessageStatusListener(object: ConnectycubeMessageStatusListener {
+    override fun onMessageDelivered(message: ConnectycubeMessage) {
+
+    }
+
+    override fun onMessageRead(message: ConnectycubeMessage) {
+
+    }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// call it after chat login
+val messageStatusesManager = ConnectycubeChatService.getInstance().messageStatusesManager
+
+val messageStatusListener = object : MessageStatusListener {
+override fun processMessageDelivered(messageId: String,
+dialogId: String,
+userId: Int
+) {
+}
+
+    override fun processMessageRead(messageId: String,
+                                    dialogId: String,
+                                    userId: Int
+    ) {
+    }
+
+}
+
+messageStatusesManager.addMessageStatusListener(messageStatusListener)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+private MessageStatusesManager messageStatusesManager;
+private MessageStatusListener messageStatusListener;
+
+// call it after chat login
+messageStatusesManager = ConnectycubeChatService.getInstance().getMessageStatusesManager();
+
+messageStatusListener = new MessageStatusListener() {
+    @Override
+    public void processMessageDelivered(String messageId, String dialogId, Integer userId) {
+
+    }
+
+    @Override
+    public void processMessageRead(String messageId, String dialogId, Integer userId) {
+
+    }
+};
+
+messageStatusesManager.addMessageStatusListener(messageStatusListener);
+````
+
+</TabItem>
+</Tabs>
+
+## 'Is typing' status
+
+The following 'typing' notifications are supported:
+
+- typing: The user is composing a message. The user is actively interacting with a message input interface specific to this chat session (e.g., by typing in the input area of a chat window)
+- stopped: The user had been composing but now has stopped. The user has been composing but has not interacted with the message input interface for a short period of time (e.g., 30 seconds)
+
+Send the 'is typing' status:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.sendIsTypingStatus(chatDialog)
+
+...
+
+ConnectyCube.chat.sendStopTypingStatus(chatDialog)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+chatDialog.sendIsTypingNotification()
+
+...
+
+chatDialog.sendStopTypingNotification()
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    chatDialog.sendIsTypingNotification();
+} catch (XMPPException | SmackException.NotConnectedException e) {
+    e.printStackTrace();
+}
+
+...
+
+try {
+chatDialog.sendStopTypingNotification();
+} catch (XMPPException | SmackException.NotConnectedException e) {
+e.printStackTrace();
+}
+
+````
+
+</TabItem>
+</Tabs>
+
+Receive the 'is typing' status callback:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addTypingStatusListener(object: ConnectycubeChatTypingListener {
+    override fun onUserIsTyping(dialogId: String?, userId: Int) {
+
+    }
+
+    override fun onUserStopTyping(dialogId: String?, userId: Int) {
+
+    }
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val typingListener = object : ChatDialogTypingListener {
+    override fun processUserIsTyping(dialogId: String, senderId: Int) {
+
+    }
+
+    override fun processUserStopTyping(dialogId: String, senderId: Int) {
+
+    }
+
+}
+
+chatDialog.addIsTypingListener(typingListener)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ChatDialogTypingListener typingListener = new ChatDialogTypingListener() {
+    @Override
+    public void processUserIsTyping(String dialogId, Integer senderId) {
+
+    }
+
+    @Override
+    public void processUserStopTyping(String dialogId, Integer senderId) {
+
+    }
+};
+
+chatDialog.addIsTypingListener(typingListener);
+````
+
+</TabItem>
+</Tabs>
+
+## Edit Message
+
+The following snippet is used to edit chat message:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+chatDialog.editMessageWithId("5356c64ab35c12bd3b10wa64", "Updated message body", true)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    dialog.editMessageWithId("5356c64ab35c12bd3b10wa64", "Updated message body", true);
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+Other users will receive the 'update' status callback:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val messageUpdateListener = MessageUpdateListener { messageID, dialogId, newBody, isLastMessage ->
+
+}
+
+ConnectycubeChatService.getInstance().messageStatusesManager.addMessageUpdateListener(messageUpdateListener)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+MessageUpdateListener messageUpdateListener = new MessageUpdateListener() {
+    @Override
+    public void processMessageUpdated(String messageID, String dialogId, String newBody, boolean isLastMessage) {
+
+    }
+};
+ConnectycubeChatService.getInstance().getMessageStatusesManager().addMessageUpdateListener(messageUpdateListener);
+````
+
+</TabItem>
+</Tabs>
+
+## Delete chat messages
+
+The following snippet is used to remove chat message via REST:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val messagesIds = listOf("546cc3240eda8f2dd7ee2291", "546cc3230eda8f2dd7ee2292")
+        
+ConnectyCube.deleteMessages(messagesIds, true, successCallback = { deleteResult ->
+
+}, errorCallback = { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val messagesIds = HashSet<String>().apply {
+    add("546cc3240eda8f2dd7ee2291")
+    add("546cc3230eda8f2dd7ee2292")
+}
+
+val forceDelete = false
+
+ConnectycubeRestChatService.deleteMessages(messagesIds, forceDelete)
+    .performAsync(object : EntityCallback<Void?> {
+        override fun onSuccess(aVoid: Void?, bundle: Bundle?) {
+
+        }
+
+        override fun onError(e: ResponseException) {
+
+        }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+Set<String> messagesIds = new HashSet<String>() {{
+    add("546cc3240eda8f2dd7ee2291");
+    add("546cc3230eda8f2dd7ee2292");
+}};
+
+boolean forceDelete = false;
+
+ConnectycubeRestChatService.deleteMessages(messagesIds, forceDelete).performAsync(new EntityCallback<Void>() {
+@Override
+public void onSuccess(Void aVoid, Bundle bundle) {
+
+    }
+
+    @Override
+    public void onError(ResponseException e) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+This request will remove the messages from current user history only, without affecting the history of other users.
+**The** `forceDelete` **parameter is used to completely remove messages.**
+
+The following snippet is used to remove chat message in a real time:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+chatDialog.removeMessageWithId("5356c64ab35c12bd3b10wa64")
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    dialog.removeMessageWithId("5356c64ab35c12bd3b10wa64");
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+Other users will receive the 'delete' status callback:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val messageDeleteListener = MessageDeleteListener { messageID, dialogId ->
+    //actions after success deleting message
+}
+ConnectycubeChatService.getInstance().messageStatusesManager.addMessageDeleteListener(messageDeleteListener)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+MessageDeleteListener messageDeleteListener = new MessageDeleteListener() {
+    @Override
+    public void processMessageDeleted(String messageID, String dialogId) {
+        //actions after success deleting message
+    }
+};
+ConnectycubeChatService.getInstance().getMessageStatusesManager().addMessageDeleteListener(messageDeleteListener);
+```
+
+</TabItem>
+</Tabs>
+
+## Self-destroy message
+
+Self-destroy messages is used if you want to implement some sort of Secret Chat where messages are visible only for some limited amount of time.
+
+It's your responsibility to setup a timer in your app and remove messages from the client side.
+
+Self-destroy messages are not stored in server history.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val chatMessage = ConnectycubeChatMessage().apply {
+    body = "Self destroy message"
+    destroyAfter = 10
+}
+
+chatDialog.sendMessage(chatMessage)
+
+chatDialog.addMessageListener(object : ChatDialogMessageListener {
+override fun processMessage(dialogId: String,
+message: ConnectycubeChatMessage,
+senderId: Int
+) {
+if (message.destroyAfter > 0) {
+// setup a timer
+}
+}
+
+    override fun processError(dialogId: String,
+                              exception: ChatException,
+                              message: ConnectycubeChatMessage,
+                              senderId: Int
+    ) {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatMessage chatMessage = new ConnectycubeChatMessage();
+chatMessage.setBody("Self destroy message");
+chatMessage.setDestroyAfter(10);
+try {
+    chatDialog.sendMessage(chatMessage);
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+}
+
+chatDialog.addMessageListener(new ChatDialogMessageListener() {
+    @Override
+    public void processMessage(String dialogId, ConnectycubeChatMessage message, Integer senderId) {
+        if (message.getDestroyAfter() > 0) {
+            // setup a timer
+        }
+     }
+});
+````
+
+</TabItem>
+</Tabs>
+
+## Attachments
+
+### Image/Video
+
+Chat attachments are supported with the cloud storage API. In order to send a chat attachment you need to upload the file to ConnectyCube cloud storage and obtain a link to the file (file UID). Then you need to include this UID into chat message and send it.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val messageAttachment = File("some_image.png")
+val fileIsPublic = false
+
+ConnectyCube.uploadFile(messageAttachment.path, fileIsPublic, successCallback = { cubeFile ->
+// create a message
+val chatMessage = ConnectycubeMessage()
+chatMessage.saveToHistory = true
+// attach a photo
+val attachment = ConnectycubeAttachment("photo")
+attachment.id = cubeFile.id.toString()
+chatMessage.attachments?.add(attachment)
+// send a chat message
+// ...
+}, errorCallback = { ex ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val messageAttachment = File("some_image.png")
+val fileIsPublic = false
+
+ConnectycubeStorage.uploadFileTask(
+    messageAttachment,
+    fileIsPublic
+) { progress ->
+
+}.performAsync(object : EntityCallback<ConnectycubeFile> {
+        override fun onSuccess(storageFile: ConnectycubeFile,
+                               bundle: Bundle?
+        ) {
+            // create a message
+            val chatMessage = ConnectycubeChatMessage()
+            chatMessage.setSaveToHistory(true)
+            // attach a photo
+            val attachment = ConnectycubeAttachment("photo")
+            attachment.id = storageFile.id.toString()
+            chatMessage.addAttachment(attachment)
+            // send a chat message
+            // ...
+        }
+
+        override fun onError(e: ResponseException) {
+
+        }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+File messageAttachment = new File("some_image.png");
+Boolean fileIsPublic = false;
+
+ConnectycubeStorage.uploadFileTask(messageAttachment, fileIsPublic, new ConnectycubeProgressCallback() {
+@Override
+public void onProgressUpdate(int progressPercentages) {
+
+    }
+
+}).performAsync(new EntityCallback<ConnectycubeFile>() {
+@Override
+public void onSuccess(ConnectycubeFile storageFile, Bundle bundle) {
+// create a message
+ConnectycubeChatMessage chatMessage = new ConnectycubeChatMessage();
+chatMessage.setSaveToHistory(true);
+// attach a photo
+ConnectycubeAttachment attachment = new ConnectycubeAttachment("photo");
+attachment.setId(file.getId().toString());
+chatMessage.addAttachment(attachment);
+
+        // send a chat message
+        // ...
+    }
+
+    @Override
+    public void onError(ResponseException e) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+The same flow is supported on the receiver's side. When you receive a message, you need to get the file UID and then download the file from the cloud storage.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// ConnectycubeMessageListener
+
+...
+
+override fun onMessage(message: ConnectycubeMessage) {
+    message.attachments?.forEach { attachment ->
+        val privateAvatarUrl = getPrivateUrlForUID(attachment.url)
+    }
+// process url
+}
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// ChatDialogMessageListener
+
+...
+
+override fun processMessage(dialogId: String,
+chatMessage: ConnectycubeChatMessage,
+senderId: Int
+) {
+for (attachment in chatMessage.attachments) {
+val fileId = attachment.id
+// download a file
+ConnectycubeStorage.downloadFile(fileId).performAsync(object : EntityCallback<InputStream> {
+override fun onSuccess(inputStream: InputStream,
+params: Bundle
+) {
+// process file
+}
+
+            override fun onError(errors: ResponseException) {
+
+            }
+        })
+    }
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// ChatDialogMessageListener
+
+...
+
+@Override
+public void processMessage(String dialogId, ConnectycubeChatMessage chatMessage, Integer senderId) {
+    for (ConnectycubeAttachment attachment : chatMessage.getAttachments()){
+        String fileId = attachment.getId();
+
+        // download a file
+        ConnectycubeStorage.downloadFile(fileId).performAsync(new EntityCallback<InputStream>(){
+            @Override
+            public void onSuccess(InputStream inputStream, Bundle params) {
+                // process file
+            }
+
+            @Override
+            public void onError(ResponseException errors) {
+
+            }
+        });
+    }
+}
+````
+
+</TabItem>
+</Tabs>
+
+### Contact
+
+A contact profile can be send via chat attachments as well:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// create a message
+val chatMessage = ConnectycubeMessage(saveToHistory = true)
+
+// build a contact representation
+val jc = JsonObject().apply {
+add("phone", JsonPrimitive("180032323223"))
+add("name", JsonPrimitive("Samuel Johnson"))
+}
+
+// attach a contact
+val attachment = ConnectycubeAttachment("contact").apply {
+data = jc.toString()
+}
+
+chatMessage.attachments?.add(attachment)
+
+// send a chat message
+// ...
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// create a message
+val chatMessage = ConnectycubeChatMessage().apply {
+    setSaveToHistory(true)
+}
+
+// build a contact representation
+val jc = JsonObject().apply {
+    add("phone", JsonPrimitive("180032323223"))
+    add("name", JsonPrimitive("Samuel Johnson"))
+}
+
+// attach a contact
+val attachment = ConnectycubeAttachment("contact").apply {
+    data = jc.toString()
+}
+
+chatMessage.addAttachment(attachment)
+
+// send a chat message
+// ...
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// create a message
+ConnectycubeChatMessage chatMessage = new ConnectycubeChatMessage();
+chatMessage.setSaveToHistory(true);
+
+// build a contact representation
+JsonObject jc = new JsonObject();
+jc.add("phone", new JsonPrimitive("180032323223"));
+jc.add("name", new JsonPrimitive("Samuel Johnson"));
+
+// attach a contact
+ConnectycubeAttachment attachment = new ConnectycubeAttachment("contact");
+attachment.setData(jc.toString());
+chatMessage.addAttachment(attachment);
+
+// send a chat message
+// ...
+
+````
+
+On the receiver's side, when you receive a message, you need to get a contact data from an attachment:
+
+</TabItem>
+</Tabs>
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// ConnectycubeMessageListener
+
+override fun onMessage(message: ConnectycubeMessage) {
+    for (attachment in message.attachments!!) {
+      val data = attachment.data
+      val obj = JsonParser().parse(data).asJsonObject
+      val phone = obj.getAsJsonPrimitive("phone").asString
+      val name = obj.getAsJsonPrimitive("name").asString
+    }
+}
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// ChatDialogMessageListener
+
+...
+
+override fun processMessage(dialogId: String,
+chatMessage: ConnectycubeChatMessage,
+senderId: Int
+) {
+for (attachment in chatMessage.attachments) {
+val data = attachment.data
+val obj = JsonParser().parse(data).asJsonObject
+val phone = obj.getAsJsonPrimitive("phone").asString
+val name = obj.getAsJsonPrimitive("name").asString
+}
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// ChatDialogMessageListener
+
+...
+
+@Override
+public void processMessage(String dialogId, ConnectycubeChatMessage chatMessage, Integer senderId) {
+    for (ConnectycubeAttachment attachment : chatMessage.getAttachments()){
+        String data = attachment.getData();
+        JsonObject obj = new JsonParser().parse(data).getAsJsonObject();
+        String phone = obj.getAsJsonPrimitive("phone").getAsString();
+        String name = obj.getAsJsonPrimitive("name").getAsString();
+    }
+}
+````
+
+</TabItem>
+</Tabs>
+
+## Message reactions
+
+### Add/Remove reactions
+
+User can add/remove message reactions and listen message reaction events
+
+Add
+
+```kotlin
+val messageId = "58e6a9c8a1834a3ea6001f15"
+val reaction = "🔥"
+
+ConnectyCube.addMessageReaction(messageId, reaction, {
+
+}, { error -> })
+```
+
+Remove
+
+```kotlin
+val messageId = "58e6a9c8a1834a3ea6001f15"
+val reaction = "👎"
+
+ConnectyCube.removeMessageReaction(messageId, reaction, {
+
+}, { error -> })
+```
+
+Add/Remove
+
+```kotlin
+val messageId = "58e6a9c8a1834a3ea6001f15"
+val reactionToAdd = "👎"
+val reactionToRemove = "🚀"
+
+ConnectyCube.updateMessageReaction(messageId, reactionToAdd, reactionToRemove, {
+
+}, { error -> })
+```
+
+### Listen reactions
+
+```kotlin
+ConnectyCube.chat.addMessageReactionsListener(object : ConnectycubeMessageReactionsListener {
+    override fun onMessageReaction(reaction: ConnectycubeReaction) {
+        // var dialogId = reaction.dialogId
+        // var messageId = reaction.messageId
+        // var addReaction = reaction.addReaction
+        // var removeReaction = reaction.removeReaction
+    }
+})
+```
+
+### List message reactions
+
+User can list message reactions
+
+```kotlin
+val messageId = "58e6a9c8a1834a3ea6001f15"
+
+ConnectyCube.getMessageReactions(messageId, { reactions ->
+    // the result contains the map where key is the reaction and value is the list of users' ids who reacted with this reaction
+}, { error -> })
+```
+Response example from `getMessageReactions(messageId)` - [see](/server/chat#response-22)
+
+## Unread messages count
+
+You can request total unread messages count and unread count for particular conversation:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogsIds: MutableList<String> = mutableListOf("546cc3240eda8f2dd7ee2291", "546cc3230eda8f2dd7ee2292")
+ConnectyCube.getUnreadMessagesCount(dialogsIds, successCallback = { result ->
+    Log.i(TAG, "total unread messages: ${result["546cc3240eda8f2dd7ee2291"]}")
+    Log.i(TAG, "total unread messages: ${result["546cc3230eda8f2dd7ee2292"]}")
+}, errorCallback = { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val dialogsIds: MutableSet<String> = HashSet<String>().apply {
+    add("546cc3240eda8f2dd7ee2291")
+    add("546cc3230eda8f2dd7ee2292")
+}
+
+val returnBundle = Bundle()
+ConnectycubeRestChatService.getTotalUnreadMessagesCount(dialogsIds, returnBundle)
+    .performAsync(object : EntityCallback<Int> {
+        override fun onSuccess(total: Int, params: Bundle) {
+            Log.i(TAG, "total unread messages: $total")
+            Log.i(TAG, "dialog Unread1: ${params?.getInt("546cc3240eda8f2dd7ee2291")}")
+            Log.i(TAG, "dialog Unread2: ${params?.getInt("546cc3230eda8f2dd7ee2292")}")
+        }
+
+        override fun onError(e: ResponseException) {
+
+        }
+    })
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+Set<String> dialogsIds = new HashSet<String>();
+    dialogsIds.add("546cc3240eda8f2dd7ee2291");
+    dialogsIds.add("546cc3230eda8f2dd7ee2292");
+
+ConnectycubeRestChatService.getTotalUnreadMessagesCount(dialogsIds, new Bundle()).performAsync(new EntityCallback<Integer>() {
+@Override
+public void onSuccess(Integer total, Bundle params) {
+Log.i(TAG, "total unread messages: " + total);
+Log.i(TAG, "dialog Unread1: " + params.getInt("546cc3240eda8f2dd7ee2291"));
+Log.i(TAG, "dialog Unread2: " + params.getInt("546cc3230eda8f2dd7ee2292"));
+}
+
+    @Override
+    public void onError(ResponseException e) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+## Global search
+
+**Global search** feature was developed to simplify search of dialogs, messages and users at the same time.
+Similar functionality is used in most popular messengers and you can implement it in your app using Connectycube SDK.
+Just use request from snippet below. `SearchRequestBuilder` is __optional__ parameter and it can be `null` if you don't need
+additional configs for search request.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val searchText = "dialog name"           // String or word. Should be longer than 4 symbols. Performs 'or' search.
+                                         // For an exact search, you need to wrap the search phrase in quotes.
+
+val searchParams: GlobalSearchParams = GlobalSearchParams() //class-helper to simple config search request
+searchParams.dialogIds = dialogsIds      // List of dialog ids. Max cam include 10 items. Optional parameter.
+searchParams.startDate = startDate       // Closest date to now. Uses lte comparison. Optional parameter.
+searchParams.endDate = endDate           // Shouldn't differ by more than 3 months from the start_date. Uses gte comparison. Optional parameter.
+searchParams.limit = 3                   // Maximum number of items returned from the server in the search results. Max value - 100. Optional parameter.
+ConnectyCube.searchText(searchText, searchParams.getSearchParams(), successCallback = { searchResult ->
+    val dialogs  = searchResult.dialogs  // found dialogs
+    val messages = searchResult.messages // found messages
+    val users    = searchResult.users    // found users
+}, errorCallback = { error ->
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val searchText                  // String or word. Should be longer than 4 symbols. Performs 'or' search.
+                                // For an exact search, you need to wrap the search phrase in quotes.
+
+val searchRequestBuilder = SearchRequestBuilder().apply {
+setDialogsIds(dialogsIds) // List of dialog ids. Max cam include 10 items. Optional parameter.
+setStartDate(startDate) // Closest date to now. Uses lte comparison. Optional parameter.
+setEndDate(endDate) // Shouldn't differ by more than 3 months from the start_date. Uses gte comparison. Optional parameter.
+limit = 3 // Maximum number of items returned from the server in the search results. Max value - 100. Optional parameter.
+}
+
+ConnectycubeRestChatService.searchByText(searchText, searchRequestBuilder).performAsync(object : EntityCallback<SearchChatEntity> {
+override fun onSuccess(result: SearchChatEntity, params: Bundle) {
+val dialogs = result.dialogs // found dialogs
+val messages = result.messages // found messages
+val users = result.users // found users
+}
+
+    override fun onError(e: ResponseException) {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+String searchText;                              // String or word. Should be longer than 4 symbols. Performs 'or' search.
+                                                // For an exact search, you need to wrap the search phrase in quotes.
+
+SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder();
+searchRequestBuilder.setDialogsIds(dialogsIds); // List of dialog ids. Max cam include 10 items. Optional parameter.
+searchRequestBuilder.setStartDate(startDate);   // Closest date to now. Uses lte comparison. Optional parameter.
+searchRequestBuilder.setEndDate(endDate);       // Shouldn't differ by more than 3 months from the start_date. Uses gte comparison. Optional parameter.
+searchRequestBuilder.setLimit(3);               // Maximum number of items returned from the server in the search results. Max value - 100. Optional parameter.
+
+ConnectycubeRestChatService.searchByText(searchText, searchRequestBuilder).performAsync(new EntityCallback<SearchChatEntity>() {
+    @Override
+    public void onSuccess(SearchChatEntity result, Bundle params) {
+        ArrayList<ConnectycubeChatDialog> dialogs   = result.getDialogs();  // found dialogs
+        ArrayList<ConnectycubeChatMessage> messages = result.getMessages(); // found messages
+        ArrayList<ConnectycubeUser> users           = result.getUsers();    // found users
+    }
+
+    @Override
+    public void onError(ResponseException responseException) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+## Chat alerts
+
+When you send a chat message and the recipient/recipients is offline, then automatic push notification will be fired.
+
+In order to receive push notifications you need to subscribe for it. Please refer to [Push Notifications](/android/push-notifications) guide.
+
+To configure push template which users receive - go to [Dashboard Console, Chat Alerts page](https://admin.connectycube.com/)
+
+Also, here is a way to avoid automatically sending push notifications to offline recipient/recipients. For it add the `silent` parameter with value `1` to the `properties` field of the instance of a `ConnectycubeMessage`.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val message = ConnectycubeMessage()
+message.properties["silent"] = "1"
+```
+
+</TabItem>
+</Tabs>
+
+After sending such a message, the server won't create the push notification for offline recipient/recipients.
+
+> **Note**
+>
+> Currently push notifications are supported on mobile environment only.
+
+## Chat notifications settings
+
+### Update notifications settings
+
+A user can turn on/off push notifications for offline messages in a dialog. By default push notification are turned ON,
+so offline user receives push notifications for new messages in a chat.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val enabled = false  //false - to disable push notification, true - to enable
+ConnectyCube.updateDialogNotificationsSettings(dialogId, enabled, { result ->
+
+}, { error ->
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+val enabled = false  //false - to disable push notification, true - to enable
+
+ConnectycubeRestChatService.updateDialogNotificationSending(dialogId, enabled).performAsync(object : EntityCallback<Boolean> {
+    override fun onSuccess(result: Boolean, params: Bundle) {
+        //if result == false - push notifications was disabled, otherwise - enabled
+    }
+
+    override fun onError(e: ResponseException) {
+
+    }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+String dialogId = "5356c64ab35c12bd3b108a41";
+boolean enabled = false; //false - to disable push notification, true - to enable
+
+ConnectycubeRestChatService.updateDialogNotificationSending(dialogId, enabled).performAsync(new EntityCallback<Boolean>() {
+@Override
+public void onSuccess(Boolean result, Bundle params) {
+//if result == false - push notifications was disabled, otherwise - enabled  
+ }
+
+    @Override
+    public void onError(ResponseException e) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+
+### Get notifications settings
+Check a status of notifications setting - either it is ON or OFF for a particular chat.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+ConnectyCube.getDialogNotificationsSettings(dialogId, { enabled ->
+
+}, { error ->
+
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val dialogId = "5356c64ab35c12bd3b108a41"
+
+ConnectycubeRestChatService.checkIsDialogNotificationEnabled(dialogId).performAsync(object : EntityCallback<Boolean> {
+override fun onSuccess(result: Boolean, params: Bundle) {
+//result == false - push notifications are disabled,
+//result == true - push notifications are enabled
+}
+
+    override fun onError(e: ResponseException) {
+
+    }
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+String dialogId = "5356c64ab35c12bd3b108a41";
+
+ConnectycubeRestChatService.checkIsDialogNotificationEnabled(dialogId).performAsync(new EntityCallback<Boolean>() {
+    @Override
+    public void onSuccess(Boolean result, Bundle params) {
+        //result == false - push notifications are disabled,
+        //result == true - push notifications are enabled
+    }
+
+    @Override
+    public void onError(ResponseException e) {
+
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+## Mark a client as Active/Inactive
+
+When you send a chat message and the recipient/recipients is offline, then automatic push notification will be fired.
+
+Sometimes a client app can be in a background mode, but still online. In this case it's useful to let server know that a user wants to receive push notifications while still is connected to chat.
+
+For this particular case we have 2 handy methods: 'enterInactiveState' and 'enterActiveState':
+
+```java
+ConnectycubeChatService.getInstance().enterInactiveState();
+```
+
+```java
+ConnectycubeChatService.getInstance().enterActiveState();
+```
+
+The common use case for these APIs is to call 'enterInactiveState' when an app goes to background mode and to call 'enterActiveState' when an app goes to foreground mode.
+
+## Get last activity
+
+There is a way to get an info when a user was active last time, in seconds.
+
+This is a modern approach for messengers apps, e.g. to display this info on a Contacts screen or on a User Profile screen.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val userId = 12345
+
+val seconds = ConnectycubeChatService.getInstance().getLastUserActivity(userId)
+// seconds - the difference in seconds from current time to last user activity in the chat or 0 if user is online.
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+int userId = 12345;
+
+double seconds = ConnectycubeChatService.getInstance().getLastUserActivity(userId);
+// seconds - the difference in seconds from current time to last user activity in the chat or 0 if user is online.
+````
+
+</TabItem>
+</Tabs>
+
+## System messages
+
+There is a way to send system messages to other users about some events. System messages work on a separate channel and are not mixed with regular chat messages:
+
+> System messages are not stored on a server. It means messages will be delivered only to online users.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+ConnectyCube.chat.addSystemMessageListener(object : ConnectycubeSystemMessageListener {
+    override fun onMessage(message: ConnectycubeMessage) {
+
+    }
+
+    override fun onError(message: ConnectycubeMessage, ex: Throwable) {
+
+    }
+
+})
+
+ConnectyCube.chat.sendSystemMessage(message {
+recipientId = 58672
+properties["param1"] = "value1"
+properties["param2"] = "value2"
+body = "some text"
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val systemMessagesManager = ConnectycubeChatService.getInstance().systemMessagesManager
+val systemMessageListener = object : SystemMessageListener {
+    override fun processMessage(message: ConnectycubeChatMessage) {
+
+    }
+
+    override fun processError(exception: ChatException,
+                              message: ConnectycubeChatMessage
+    ) {
+
+    }
+}
+
+systemMessagesManager.addSystemMessageListener(systemMessageListener)
+
+val systemMessage = ConnectycubeChatMessage().apply {
+    recipientId = 58672
+    setProperty("param1", "value1")
+    setProperty("param2", "value2")
+    body = "some text"
+}
+
+systemMessagesManager.sendSystemMessage(systemMessage)
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+SystemMessagesManager systemMessagesManager = ConnectycubeChatService.getInstance().getSystemMessagesManager();
+SystemMessageListener systemMessageListener = new SystemMessageListener() {
+    @Override
+    public void processMessage(ConnectycubeChatMessage message) {
+    }
+
+    @Override
+    public void processError(ChatException exception, ConnectycubeChatMessage message) {
+    }
+
+};
+systemMessagesManager.addSystemMessageListener(systemMessageListener);
+
+ConnectycubeChatMessage systemMessage = new ConnectycubeChatMessage();
+systemMessage.setRecipientId(58672);
+systemMessage.setProperty("param1", "value1");
+systemMessage.setProperty("param2", "value2");
+systemMessage.setBody("some text");
+
+try {
+systemMessagesManager.sendSystemMessage(systemMessage);
+} catch (SmackException.NotConnectedException e) {
+e.printStackTrace();
+}
+
+```
+</TabItem>
+</Tabs>
+
+
+## Moderation
+
+The moderation capabilities help maintain a safe and respectful chat environment. We have options that allow users to report inappropriate content and manage their personal block lists, giving them more control over their experience.
+
+### Report user
+
+For user reporting to work, it requires the following:
+1. Go to [ConnectyCube Daashboard](https://admin.connectycube.com/)
+2. select your Application
+3. Navigate to **Custom** module via left sidebar
+4. Create new table called **UserReports** with the following fields:
+  - **reportedUserId** - integer
+  - **reason** - string
+
+<img src="/images/chat_widget/chat-widget-report-table.png" alt="Chat widget: report table in ConnectyCube dashboard" />
+
+Once the table is created, you can create a report with the following code snippet and then see all the reports in Dashboard:
+
+```kotlin
+val customObject: ConnectycubeCustomObject = ConnectycubeCustomObject("UserReports")
+
+customObject.fields = hashMapOf (                              
+    "reportedUserId" to 45,                               
+    "reason" to "User is spamming with bad words", 
+)                                                              
+
+ConnectyCube.createCustomObject(customObject, { createdObject ->                                         
+
+}, { ex ->  }) 
+```
+
+### Report message
+
+For message reporting to work, the same approach to user reporting above could be used. 
+
+You need to create new table called **MessageReports** with the following fields:
+- **reportedMessageId** - integer
+- **reason** - string
+
+Once the table is created, you can create a report with the following code snippet and then see all the reports in Dashboard:
+
+```kotlin
+val customObject: ConnectycubeCustomObject = ConnectycubeCustomObject("MessageReports")
+
+customObject.fields = hashMapOf (                              
+    "reportedMessageId" to "58e6a9c8a1834a3ea6001f15",                               
+    "reason" to "The message contains phishing links", 
+)                                                              
+
+ConnectyCube.createCustomObject(customObject, { createdObject ->                                         
+
+}, { ex ->  }) 
+```
+
+### Block user
+
+Block list (aka Privacy list) allows enabling or disabling communication with other users. You can create, modify, or delete privacy lists, define a default list.
+
+> The user can have multiple privacy lists, but only one can be active.
+
+#### Create privacy list
+
+A privacy list must have at least one element in order to be created. **If no elements specified, then the list with given name will be deleted.**
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val list = ConnectycubePrivacyList().apply {
+    name = "myList"
+}
+
+val items = ArrayList<ConnectycubePrivacyListItem>()
+
+val item1 = ConnectycubePrivacyListItem().apply {
+isAllow = false
+type = ConnectycubePrivacyListItem.Type.USER_ID
+valueForType = 3678.toString()
+isMutualBlock = true
+}
+
+items.add(item1)
+
+list.items = items
+
+val privacyListsManager = chatService.privacyListsManager
+privacyListsManager.createPrivacyList(list)
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubePrivacyList list = new ConnectycubePrivacyList();
+list.setName("myList");
+
+ArrayList<ConnectycubePrivacyListItem> items = new ArrayList<ConnectycubePrivacyListItem>();
+
+ConnectycubePrivacyListItem item1 = new ConnectycubePrivacyListItem();
+item1.setAllow(false);
+item1.setType(ConnectycubePrivacyListItem.Type.USER_ID);
+item1.setValueForType(String.valueOf(3678));
+item1.setMutualBlock(true);
+
+items.add(item1);
+
+list.setItems(items);
+
+PrivacyListsManager privacyListsManager = chatService.getPrivacyListsManager();
+try {
+    privacyListsManager.createPrivacyList(list);
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+} catch (XMPPException.XMPPErrorException e) {
+    e.printStackTrace();
+} catch (SmackException.NoResponseException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+The `ConnectycubePrivacyListItem` class takes 4 arguments:
+
+- **type** - use **USER_ID** to block a user in 1-1 chat or **GROUP_USER_ID** to block in a group chat.
+- **valueForType** - ID of a user to apply an action
+- **allow** - can be true/false.
+- **mutualBlock** - can be true/false - to block user's message in both directions or not.
+
+> In order to be used the privacy list should be not only set, but also activated(set as default).
+
+#### Activate privacy list
+
+In order to activate rules from a privacy list you should set it as default:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+privacyListsManager.applyPrivacyList("myList")
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    privacyListsManager.applyPrivacyList("myList");
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+} catch (XMPPException.XMPPErrorException e) {
+    e.printStackTrace();
+} catch (SmackException.NoResponseException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+#### Update privacy list
+
+There are some rules you should follow to update a privacy list:
+
+- Include all of the desired items (not a "delta").
+- If you want to update or set new privacy list instead of current one, you should decline current default list first.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// Deactivate active list
+privacyListsManager.declinePrivacyList()
+
+// Create new list
+// ...
+
+// Activate again active list
+privacyListsManager.applyPrivacyList("myList")
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// Deactivate active list
+try {
+    privacyListsManager.declinePrivacyList();
+} catch (SmackException|XMPPException.XMPPErrorException e) {
+
+}
+
+// Create new list
+// ...
+
+// Activate again active list
+try {
+    privacyListsManager.applyPrivacyList("myList");
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+} catch (XMPPException.XMPPErrorException e) {
+    e.printStackTrace();
+} catch (SmackException.NoResponseException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+#### Retrieve privacy lists
+
+To get a list of all your privacy lists use the following request:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val privacyListsManager = ConnectycubeChatService.getInstance().privacyListsManager
+
+val lists = privacyListsManager.privacyLists
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+PrivacyListsManager privacyListsManager = ConnectycubeChatService.getInstance().getPrivacyListsManager()
+
+List<ConnectycubePrivacyList> lists = null;
+try {
+    lists = privacyListsManager.getPrivacyLists();
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+} catch (XMPPException.XMPPErrorException e) {
+    e.printStackTrace();
+} catch (SmackException.NoResponseException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+#### Retrieve privacy list with name
+
+To get the privacy list by name you should use the following method:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+var list = privacyListsManager.getPrivacyList("myList")
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubePrivacyList list = null;
+try {
+    list = privacyListsManager.getPrivacyList("myList");
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+} catch (XMPPException.XMPPErrorException e) {
+    e.printStackTrace();
+} catch (SmackException.NoResponseException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+#### Remove privacy list
+
+> Note: Before deleting privacy list you should decline it.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+privacyListsManager.declinePrivacyList()
+privacyListsManager.deletePrivacyList("myList")
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+try {
+    privacyListsManager.declinePrivacyList();
+    privacyListsManager.deletePrivacyList("myList");
+} catch (SmackException.NotConnectedException e) {
+    e.printStackTrace();
+} catch (XMPPException.XMPPErrorException e) {
+    e.printStackTrace();
+} catch (SmackException.NoResponseException e) {
+    e.printStackTrace();
+}
+```
+
+</TabItem>
+</Tabs>
+
+#### Blocked user attempts to communicate with user
+
+Blocked users will be receiving an error when trying to chat with a user in a 1-1 chat and will be receiving nothing in a group chat:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val chatMessage = ConnectycubeChatMessage().apply {
+    body = "How is going on?"
+}
+
+val chatDialog = ...
+chatDialog.sendMessage(chatMessage)
+
+...
+
+chatDialog.addMessageListener(object : ChatDialogMessageListener {
+override fun processMessage(dialogId: String,
+message: ConnectycubeChatMessage,
+senderId: Int
+) {}
+
+    override fun processError(dialogId: String,
+                              exception: ChatException,
+                              message: ConnectycubeChatMessage,
+                              senderId: Int
+    ) {
+        Log.e(TAG, "processError: " + exception.localizedMessage)
+    }
+
+})
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatMessage chatMessage = new ConnectycubeChatMessage();
+chatMessage.setBody("How is going on?");
+
+ConnectycubeChatDialog chatDialog = ...;
+
+chatDialog.sendMessage(chatMessage);
+
+...
+
+privateDialog.addMessageListener(new ChatDialogMessageListener() {
+    @Override
+    public void processMessage(String dialogId, ConnectycubeChatMessage message, Integer senderId) {
+
+    }
+
+    @Override
+    public void processError(String dialogId, ChatException exception, ConnectycubeChatMessage message, Integer senderId) {
+      log("processError: " + exception.getLocalizedMessage());
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+```log
+Log output:
+processError: Service not available.
+```
+
+## Ping server
+
+Sometimes, it can be cases where TCP connection to Chat server can go down without the application layer knowing about it.
+
+To check that chat connection is still alive or to keep it to be alive there is a ping method:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//coming soon
+````
+
+</TabItem>
+</Tabs>

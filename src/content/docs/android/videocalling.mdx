@@ -1,0 +1,1781 @@
+---
+title: Video Calling
+description: Empower your Android applications with our Video Calling P2P API. Enable secure and immersive peer-to-peer video calls for enhanced user experience
+head:
+  - tag: title
+    content: Android Video Calling P2P API | ConnectyCube
+sidebar:
+  label: Video calling
+  order: 5
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+ConnectyCube **Video Calling P2P API** is built on top of [WebRTC](https://webrtc.org/) protocol and based on top of [WebRTC Mesh](https://webrtcglossary.com/mesh/) architecture.
+
+Max people per P2P call is 4.
+
+> To get a difference between **P2P calling** and **Conference calling** please read our [ConnectyCube Calling API comparison](https://connectycube.com/2020/04/15/connectycube-calling-api-comparison/) blog page.
+
+## Connect VideoChat SDK
+
+To include video chat capabilities into your app you need to include the relevant dependencies in **build.gradle** project file (only for V1):
+
+#### SDK v1 (deprecated)
+
+```groovy
+dependencies {
+    implementation "com.connectycube:connectycube-android-sdk-videochat:x.x.x"
+}
+```
+
+## Preparations
+
+### Permissions
+
+The video chat module requires camera, microphone, internet and storage permissions. Make sure you add relevant permissions to your app manifest:
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+```
+
+You can get more info on how to work with app permissions at [Android Permissions Overview](https://developer.android.com/guide/topics/permissions/overview)
+
+### Add signaling manager
+
+[ConnectyCube Chat API](/android/messaging) is used as a signaling transport for Video Calling API, so in order to start using Video Calling API you need to [connect to Chat](/android/messaging#connect-to-chat).
+
+To be able to receive incoming video chat calls, you need to add WebRTC signaling to `RTCClient`:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//no need to add signaling manually
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+ConnectycubeChatService.getInstance().videoChatWebRTCSignalingManager?.addSignalingManagerListener(object: VideoChatSignalingManagerListener {
+    override fun signalingCreated(signaling: Signaling, createdLocally: Boolean) {
+        if (!createdLocally) {
+            RTCClient.getInstance(context).addSignaling(signaling as WebRTCSignaling)
+        }
+    }
+})
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConnectycubeChatService.getInstance().getVideoChatWebRTCSignalingManager().addSignalingManagerListener(new VideoChatSignalingManagerListener() {
+    @Override
+    public void signalingCreated(Signaling signaling, boolean createdLocally) {
+        if (!createdLocally) {
+            RTCClient.getInstance(this).addSignaling((WebRTCSignaling) signaling);
+        }
+    }
+});
+```
+
+</TabItem>
+</Tabs>
+
+### Prepare an Activity
+
+To be able to receive callbacks about current `RTCSession` instance state, about video tracks (local and remotes) and session's peer connections states  
+you must implement appropriate interfaces by calling the following methods on `RTCSession` instance:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+fun addSessionStateCallbacksListener(callback: RTCSessionStateCallback<P2PSession>)
+fun addVideoTrackCallbacksListener(callback: VideoTracksCallback<P2PSession>)
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+fun addSessionCallbacksListener(callback: RTCSessionConnectionCallbacks)
+fun addVideoTrackCallbacksListener(callback: RTCClientVideoTracksCallback<RTCSession>)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+public void addSessionCallbacksListener(RTCSessionConnectionCallbacks callback)
+public void addVideoTrackCallbacksListener(RTCClientVideoTracksCallback<RTCSession> callback)
+```
+
+</TabItem>
+</Tabs>
+
+and also the following method on `RTCClient` or `P2PCalls` instance:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+fun addSessionCallbacksListener(callback: RTCSessionEventsCallback)
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+fun addSessionCallbacksListener(callback: RTCClientSessionCallbacks)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+public void addSessionCallbacksListener(RTCClientSessionCallbacks callback)
+```
+
+</TabItem>
+</Tabs>
+
+### Setup views
+
+Set up your layout views for remote and local video tracks:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```xml
+<com.connectycube.webrtc.RTCSurfaceView
+    android:id="@+id/opponentView"
+    android:layout_width="100dp"
+    android:layout_height="100dp" />
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated) / SDK v1 java (deprecated)'>
+```xml
+<com.connectycube.videochat.view.RTCSurfaceView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/localView"
+    android:layout_width="100dp"
+    android:layout_height="100dp" />
+```
+
+```xml
+<com.connectycube.videochat.view.RTCSurfaceView
+    android:id="@+id/opponentView"
+    android:layout_width="100dp"
+    android:layout_height="100dp" />
+```
+
+</TabItem>
+</Tabs>
+
+`RTCSurfaceView` allows using several views on screen layout and to overlap each other which is a good feature for group video calls.
+
+`RTCSurfaceView` is a surface view (it extends `org.webrtc.SurfaceViewRenderer` class) that renderers video track. It has its own lifecycle for rendering. It uses `init()` method for preparing to render and `release()` to release resource when video track does not exist any more.
+
+`RTCSurfaceView` is automatically initialized after the surface is created - in `surfaceCreated()` method callback. You can manually initialize `RTCSurfaceView` using `Egl` context getting from `RTCClient`. Use this method only when Activity is alive and GL resources exist:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val surfaceView: RTCSurfaceView = ...
+val eglContext = EglBaseContext.getEglContext()
+surfaceView.init(eglContext.eglBaseContext, null)
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val surfaceView: RTCSurfaceView = ...
+val eglContext = RTCClient.getInstance(context).eglContext
+surfaceView.init(eglContext.eglBaseContext, null)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCSurfaceView surfaceView = ...;
+EglBase eglContext = RTCClient.getInstance(getContext()).getEglContext();
+surfaceView.init(eglContext.getEglBaseContext(), null);
+```
+
+</TabItem>
+</Tabs>
+
+Method `release()` should be called when video track is no more valid, for example, when you receive `onConnectionClosedForUser()` callback from `RTCSession` or when `RTCSession` is going to close. But you should call `release()` method before `Activity` is destroyed and while `EGLContext` is still valid. If you don't call this method, the GL resources might leak.
+
+Here is the `RTCSurfaceView` interface:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+RTCSurfaceView.init(EglBase.Context, RendererCommon.RendererEvents) //Initialize this view using webrtc Egl context, It is allowed to call init() to reinitialize the view after a previous init()/release() cycle.
+RTCSurfaceView.release() // releases all related GL resources
+RTCSurfaceView.setScalingType(RendererCommon.ScalingType) //Set how the video will fill the allowed layout area
+RTCSurfaceView.setMirror(Boolean) //Set if the video stream should be mirrored or not.
+RTCSurfaceView.requestLayout() // Request to invalidate view when something has changed
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+RTCSurfaceView.init(EglBase.Context, RendererCommon.RendererEvents) //Initialize this view using webrtc Egl context, It is allowed to call init() to reinitialize the view after a previous init()/release() cycle.
+RTCSurfaceView.release() // releases all related GL resources
+RTCSurfaceView.setScalingType(RendererCommon.ScalingType) //Set how the video will fill the allowed layout area
+RTCSurfaceView.setMirror(Boolean) //Set if the video stream should be mirrored or not.
+RTCSurfaceView.requestLayout() // Request to invalidate view when something has changed
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCSurfaceView.init(EglBase.Context, RendererCommon.RendererEvents);//Initialize this view using webrtc Egl context, It is allowed to call init() to reinitialize the view after a previous init()/release() cycle.
+RTCSurfaceView.release(); // releases all related GL resources
+RTCSurfaceView.setScalingType(scalingType); //Set how the video will fill the allowed layout area
+RTCSurfaceView.setMirror(mirror); //Set if the video stream should be mirrored or not.
+RTCSurfaceView.requestLayout(); // Request to invalidate view when something has changed
+```
+
+</TabItem>
+</Tabs>
+
+To render received video track from an opponent use the following snippet:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+fun fillVideoView(userId: Int,
+                  videoView: RTCSurfaceView,
+                  videoTrack: ConnectycubeVideoTrack
+) {
+     videoTrack.addSink(videoView.videoSink)
+}
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+fun fillVideoView(userId: Int,
+                  videoView: RTCSurfaceView,
+                  videoTrack: RTCVideoTrack
+) {
+    videoTrack.addRenderer(videoView)
+}
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+private void fillVideoView(int userId, RTCSurfaceView videoView, RTCVideoTrack videoTrack) {
+    videoTrack.addRenderer(new VideoRenderer(videoView));
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Notify RTCClient you are ready for processing calls
+
+As soon as your app is ready for calls processing and activity exists, use the following snippet in activity class:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//do nothing
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```java
+RTCClient.getInstance(context).prepareToProcessCalls()
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCClient.getInstance(this).prepareToProcessCalls();
+```
+
+</TabItem>
+</Tabs>
+
+> **Note**:
+> Pay attention: if you forget to add signaling manager, you will not be able to process calls.
+
+## Initiate a call
+
+To call users you should create a session and start a call:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val opponents: MutableList<Int> = ArrayList()
+opponents.add(21)
+
+// User can pass an additional info along with the call request
+val userInfo: HashMap<String, String> = HashMap()
+userInfo["key1"] = "value1"
+
+//Init session
+val session = P2PCalls.createSession(opponents, CallType.VIDEO)
+
+session.startCall(userInfo)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val opponents: MutableList<Int> = ArrayList()
+opponents.add(21)
+
+// User can pass an additional info along with the call request
+val userInfo: MutableMap<String, String> = HashMap()
+userInfo["key1"] = "value1"
+
+//Init session
+val session = RTCClient.getInstance(this)
+    .createNewSessionWithOpponents(opponents, RTCTypes.ConferenceType.CONFERENCE_TYPE_VIDEO)
+
+session.startCall(userInfo)
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+List<Integer> opponents = new ArrayList<Integer>();
+opponents.add(21);
+
+// User can pass an additional info along with the call request
+Map<String, String> userInfo = new HashMap<>();
+userInfo.put("key1", "value1");
+
+//Init session
+RTCSession session = RTCClient.getInstance(this).createNewSessionWithOpponents(opponents, CONFERENCE_TYPE_VIDEO);
+
+session.startCall(userInfo);
+
+````
+
+</TabItem>
+</Tabs>
+
+After this, your opponents will receive a call request callback `onReceiveNewSession` via `RTCClientSessionCallbacks` (read below).
+
+## Track session callbacks
+
+For managing all session's states you need to implement interface `RTCClientSessionCallbacks`.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// implement interface RTCCallSessionCallback
+P2PCalls.addSessionCallbacksListener(this)
+P2PCalls.removeSessionCallbacksListener(this)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+RTCClient.getInstance(this).addSessionCallbacksListener(this)
+RTCClient.getInstance(this).removeSessionsCallbacksListener(this)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCClient.getInstance(this).addSessionCallbacksListener(this);
+RTCClient.getInstance(this).removeSessionsCallbacksListener(this);
+```
+
+</TabItem>
+</Tabs>
+
+Once you called `RTCClient.getInstance(this).prepareToProcessCalls()` method and added an instance of class, that implements `RTCClientSessionCallbacks`, to `RTCClient`, via method `RTCClient.getInstance(this).addSessionCallbacksListener(listener)`, you should start receiving sessions callbacks.
+
+The interface of `RTCClientSessionCallbacks` is the following:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+/**
+ * Called each time when new session request is received.
+ */
+fun onReceiveNewSession(session: P2PSession)
+
+/\*\*
+
+- Called in case when user didn't answer within timer expiration period
+  \*/
+  override fun onUserNotAnswer(session: P2PSession, opponentId: Int) {}
+
+/\*\*
+
+- Called in case when opponent has rejected your call
+  \*/
+  override fun onCallRejectByUser((session: P2PSession, opponentId: Int, userInfo: Map<String, String?>?) {}
+
+/\*\*
+
+- Called in case when opponent has accepted your call
+  \*/
+  override fun onCallAcceptByUser(session: P2PSession, opponentId: Int, userInfo: Map<String, String?>?) {}
+
+/\*\*
+
+- Called in case when opponent hung up
+  \*/
+  override fun onReceiveHangUpFromUser(session: P2PSession, opponentId: Int, userInfo: Map<String, String?>?) {}
+
+/\*\*
+
+- Called in case when user didn't make any actions on received session
+  \*/
+  override fun onUserNoActions(session: P2PSession, userId: Int) {}
+
+/\*\*
+
+- Called in case when session will close
+  \*/
+  override fun onSessionStartClose(session: P2PSession) {}
+
+/\*\*
+
+- Called when session is closed.
+  \*/
+  override fun onSessionClosed(session: P2PSession) {}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+/**
+ * Called each time when new session request is received.
+ */
+override fun onReceiveNewSession(session: RTCSession) {}
+
+/**
+ * Called in case when user didn't answer within timer expiration period
+ */
+override fun onUserNotAnswer(session: RTCSession, userId: Int) {}
+
+/**
+ * Called in case when opponent has rejected your call
+ */
+override fun onCallRejectByUser(session: RTCSession, userId: Int, userInfo: MutableMap<String, String>?) {}
+
+/**
+ * Called in case when opponent has accepted your call
+ */
+override fun onCallAcceptByUser(session: RTCSession, userId: Int, userInfo: MutableMap<String, String>?) {}
+
+/**
+ * Called in case when opponent hung up
+ */
+override fun onReceiveHangUpFromUser(session: RTCSession, userId: Int, userInfo: MutableMap<String, String>?) {}
+
+/**
+ * Called in case when user didn't make any actions on received session
+ */
+override fun onUserNoActions(session: RTCSession, userId: Int) {}
+
+/**
+ * Called in case when session will close
+ */
+override fun onSessionStartClose(session: RTCSession) {}
+
+/**
+ * Called when session is closed.
+ */
+override fun onSessionClosed(session: RTCSession?) {}
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+/**
+ * Called each time when new session request is received.
+ */
+void onReceiveNewSession(RTCSession session);
+
+/\*\*
+
+- Called in case when user didn't answer within timer expiration period
+  \*/
+  void onUserNotAnswer(RTCSession session, Integer userID);
+
+/\*\*
+
+- Called in case when opponent has rejected your call
+  \*/
+  void onCallRejectByUser(RTCSession session, Integer userID, Map<String, String> userInfo);
+
+/\*\*
+
+- Called in case when opponent has accepted your call
+  \*/
+  void onCallAcceptByUser(RTCSession session, Integer userID, Map<String, String> userInfo);
+
+/\*\*
+
+- Called in case when opponent hung up
+  \*/
+  void onReceiveHangUpFromUser(RTCSession session, Integer userID, Map<String, String> userInfo);
+
+/\*\*
+
+- Called in case when user didn't make any actions on received session
+  \*/
+  void onUserNoActions(RTCSession session, Integer userID);
+
+/\*\*
+
+- Called in case when session will close
+  \*/
+  void onSessionStartClose(RTCSession session);
+
+/\*\*
+
+- Called when session is closed.
+  \*/
+  void onSessionClosed(RTCSession session);
+
+````
+
+</TabItem>
+</Tabs>
+
+## Accept a call
+
+You will receive all incoming call requests in `RTCClientSessionCallbacks.onReceiveNewSession(session)` callback.
+
+There are a few ways how to proceed:
+
+* accept incoming call;
+* reject incoming call.
+
+To accept the call request use the following code snippet:
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// RTCCallSessionCallback
+override fun onReceiveNewSession(session: P2PSession) {
+        // obtain received user info
+        // val userInfo = session.getUserInfo()
+
+        // set your user info if needed
+        val userInfo = HashMap<String, String>()
+        userInfo["key1"] = "value1"
+
+        // Accept the incoming call
+        session.acceptCall(userInfo)
+}
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// RTCClientSessionCallbacks
+override fun onReceiveNewSession(session: RTCSession) {
+        // obtain received user info
+        val userInfo = session.userInfo
+
+        // set your user info if needed
+        val userInfo = HashMap<String, String>()
+        userInfo["key1"] = "value1"
+
+        // Accept the incoming call
+        session.acceptCall(userInfo)
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// RTCClientSessionCallbacks
+public void onReceiveNewSession(RTCSession session){
+   // obtain received user info
+   Map<String,String> userInfo = session.getUserInfo();
+
+   // set your user info if needed
+   Map<String,String> userInfo = new HashMap<>;
+   userInfo.put("key1", "value1");
+
+   // Accept the incoming call
+   session.acceptCall(userInfo);
+}
+````
+
+</TabItem>
+</Tabs>
+
+After this, your opponent will receive an accept callback:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// RTCSessionEventsCallback
+override fun onCallAcceptByUser(session: P2PSession, 
+									  opponentId: Int, 
+									  userInfo: Map<String, String?>?) {
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// RTCClientSessionCallbacks
+override fun onCallAcceptByUser(session: RTCSession,
+                                userID: Int,
+                                userInfo: Map<String, String>?
+) {
+
+}
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// RTCClientSessionCallbacks
+public void onCallAcceptByUser(RTCSession session, Integer userID, Map<String, String> userInfo){
+
+}
+
+````
+
+</TabItem>
+</Tabs>
+
+## Render video stream to view
+
+For managing video tracks you need to implement `RTCClientVideoTracksCallbacks` interface:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+p2pSession.addVideoTrackCallbacksListener(this)
+p2pSession.removeVideoTrackCallbacksListener(this)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+rtcSession.addVideoTrackCallbacksListener(this)
+rtcSession.removeVideoTrackCallbacksListener(this)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+rtcSession.addVideoTrackCallbacksListener(this);
+rtcSession.removeVideoTrackCallbacksListener(this);
+```
+
+</TabItem>
+</Tabs>
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+/**
+ * Called when local video track is received
+ */
+override fun onLocalVideoTrackReceive(session: P2PSession,
+											 videoTrack: ConnectycubeVideoTrack
+) {}
+
+/\*\*
+
+- Called when remote video track is received
+  \*/
+  override fun onRemoteVideoTrackReceive(session: P2PSession,
+  videoTrack: ConnectycubeVideoTrack,
+  userId: Int
+  ) {}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+/**
+ * Called when local video track is received
+ */
+override fun onLocalVideoTrackReceive(session: RTCSession,
+                                      localVideoTrack: RTCVideoTrack
+) {}
+
+/**
+ * Called when remote video track is received
+ */
+override fun onRemoteVideoTrackReceive(session: RTCSession,
+                                       remoteVideoTrack: RTCVideoTrack,
+                                       userID: Int
+) {}
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+/**
+ * Called when local video track is received
+ */
+void onLocalVideoTrackReceive(RTCSession session, RTCVideoTrack localVideoTrack);
+
+/\*\*
+
+- Called when remote video track is received
+  \*/
+  void onRemoteVideoTrackReceive(RTCSession session, RTCVideoTrack remoteVideoTrack, Integer userID);
+
+````
+
+</TabItem>
+</Tabs>
+
+Once you've got an access to video track, you can render them to some view in your app UI:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+private fun fillVideoView(userId: Int,
+                          videoView: RTCSurfaceView,
+                          videoTrack: ConnectycubeVideoTrack,
+                          remoteRenderer: Boolean
+) {
+    videoTrack.addSink(videoView.videoSink)
+    updateVideoView(videoView, !remoteRenderer, ScalingType.SCALE_ASPECT_FILL)
+}
+
+private fun updateVideoView(surfaceView: RTCSurfaceView,
+                            mirror: Boolean,
+                            scalingType: ScalingType
+) {
+    surfaceView.setScalingType(scalingType)
+    surfaceView.setMirror(mirror)
+    surfaceView.requestLayout()
+}
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+private fun fillVideoView(userId: Int,
+                          videoView: RTCSurfaceView,
+                          videoTrack: ConnectycubeVideoTrack,
+                          remoteRenderer: Boolean
+) {
+    videoTrack.addRenderer(videoView)
+    updateVideoView(videoView, !remoteRenderer, ScalingType.SCALE_ASPECT_FILL)
+}
+
+private fun updateVideoView(surfaceView: RTCSurfaceView,
+mirror: Boolean,
+scalingType: ScalingType
+) {
+surfaceView.setScalingType(scalingType)
+surfaceView.setMirror(mirror)
+surfaceView.requestLayout()
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+private void fillVideoView(int userId, RTCSurfaceView videoView, RTCVideoTrack videoTrack, boolean remoteRenderer) {
+    videoTrack.addRenderer(new VideoRenderer(videoView));
+    updateVideoView(videoView, !remoteRenderer, RendererCommon.ScalingType.SCALE_ASPECT_FILL);
+}
+
+private void updateVideoView(RTCSurfaceView surfaceView, boolean mirror, RendererCommon.ScalingType scalingType){
+    surfaceView.setScalingType(scalingType);
+    surfaceView.setMirror(mirror);
+    surfaceView.requestLayout();
+}
+````
+
+</TabItem>
+</Tabs>
+
+## Obtain audio tracks
+
+To get an access to audio tracks you need to implement `RTCClientAudioTracksCallback` interface:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+p2pSession.addAudioTrackCallbacksListener(this)
+p2pSession.removeAudioTrackCallbacksListener(this)
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+rtcSession.addAudioTrackCallbacksListener(this)
+rtcSession.removeAudioTrackCallbacksListener(this)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+rtcSession.addAudioTrackCallbacksListener(this);
+rtcSession.removeAudioTrackCallbacksListener(this);
+```
+
+</TabItem>
+</Tabs>
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+/**
+ * Called when local audio track is received
+ */
+override fun onLocalAudioTrackReceive(session: P2PSession, audioTrack: ConnectycubeAudioTrack) {}
+
+/\*\*
+
+- Called when remote audio track is received
+  \*/
+  override fun onRemoteAudioTrackReceive(session: P2PSession,
+  audioTrack: ConnectycubeAudioTrack,
+  userId: Int
+  ) {}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+/**
+ * Called when local audio track is received
+ */
+override fun onLocalAudioTrackReceive(session: RTCSession, audioTrack: RTCAudioTrack) {}
+
+/**
+ * Called when remote audio track is received
+ */
+override fun onRemoteAudioTrackReceive(session: RTCSession,
+                                       audioTrack: RTCAudioTrack,
+                                       userID: Int
+) {}
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+/**
+ * Called when local audio track is received
+ */
+ void onLocalAudioTrackReceive(RTCSession session, RTCAudioTrack audioTrack);
+
+/\*\*
+
+- Called when remote audio track is received
+  \*/
+  void onRemoteAudioTrackReceive(RTCSession session, RTCAudioTrack audioTrack, Integer userID);
+
+````
+
+</TabItem>
+</Tabs>
+
+Then you can use these audio tracks to mute/unmute audio. Read more below.
+
+## Receive a call in background
+
+For mobile apps, it can be a situation when an opponent's user app is either in closed (killed) or background (inactive) state.
+
+In this case, to be able to still receive a call request, you can use Push Notifications. The flow should be as follows:
+
+- a call initiator should send a push notification along with a call request;
+- when an opponent's app is killed or in background state - an opponent will receive a push notification about an incoming call, and will be able to accept/reject the call. If accepted or pressed on a push notification - an app will be opened, a user should auto login and connect to chat and then will be able to join an incoming call;
+
+Please refer to [Push Notifications API guides](/android/push-notifications) regarding how to integrate Push Notifications in your app.
+
+## Reject a call
+
+To reject a call request just use the following method:
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// RTCCallSessionCallback
+override fun onReceiveNewSession(session: P2PSession) {
+    // obtain received user info
+    // val userInfo = session.userInfo
+
+    // set your user info if needed
+    val userInfo = HashMap<String, String>()
+    userInfo["key1"] = "value1"
+
+    // Rejecting the incoming call
+    session.rejectCall(userInfo)
+}
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// RTCClientSessionCallbacks
+override fun onReceiveNewSession(session: RTCSession) {
+    // obtain received user info
+    val userInfo = session.userInfo
+
+    // set your user info if needed
+    val userInfo = HashMap<String, String>()
+    userInfo["key1"] = "value1"
+
+    // Rejecting the incoming call
+    session.rejectCall(userInfo)
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// RTCClientSessionCallbacks
+public void onReceiveNewSession(RTCSession session){
+   // obtain received user info
+   Map<String,String> userInfo = session.getUserInfo();
+
+   // set your user info if needed
+   Map<String,String> userInfo = new HashMap<String,String>;
+   userInfo.put("key1", "value1");
+
+   // Rejecting the incoming call
+   session.rejectCall(userInfo);
+}
+````
+
+</TabItem>
+</Tabs>
+
+After this, your opponent will receive a reject callback:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// RTCSessionEventsCallback
+override fun onCallRejectByUser(session: P2PSession,
+									  opponentId: Int,
+									  userInfo: Map<String, String?>?
+) {}
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// RTCClientSessionCallbacks
+override fun onCallRejectByUser(session: RTCSession,
+                                userID: Int,
+                                userInfo: Map<String, String>?
+) {}
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// RTCClientSessionCallbacks
+public void onCallRejectByUser(RTCSession session, Integer userID, Map<String, String> userInfo){
+
+}
+
+````
+
+</TabItem>
+</Tabs>
+
+## End a call
+
+To end a call use the following snippet:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// set your user info if needed
+val userInfo = HashMap<String, String>()
+userInfo["key1"] = "value1"
+
+session.hangUp(userInfo)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+// set your user info if needed
+val userInfo = HashMap<String, String>()
+userInfo["key1"] = "value1"
+
+session.hangUp(userInfo)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+// set your user info if needed
+Map<String,String> userInfo = new HashMap<String,String>;
+userInfo.put("key1", "value1");
+
+session.hangUp(userInfo);
+````
+
+</TabItem>
+</Tabs>
+
+After this, your opponent will receive a hang up callback:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+override fun onReceiveHangUpFromUser(session: P2PSession, opponentId: Int, userInfo: Map<String, String?>?) {}
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+override fun onReceiveHangUpFromUser(session: RTCSession, userID: Int, userInfo: Map<String, String>?) {}
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+public void onReceiveHangUpFromUser(RTCSession session, Integer userID, Map<String, String> userInfo){
+
+}
+
+````
+
+</TabItem>
+</Tabs>
+
+## Release resource
+
+When you don't want to receive and process video calls anymore - you need to destroy `RTCClient`:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+EglBaseContext.release()
+P2PCalls.destroy()
+//P2PCalls.register() to init
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+RTCClient.getInstance(this).destroy()
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCClient.getInstance(this).destroy();
+```
+
+</TabItem>
+</Tabs>
+
+This method unregisters `RTCClient` from receiving any video chat events, clear session callbacks and closes existing signaling channels.
+
+## Monitor connection state
+
+To monitor the states of your peer connections (users) you need to implement `RTCSessionStateCallback` interface:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// RTCSessionStateCallback
+p2pSession.addSessionStateCallbacksListener(this)
+p2pSession.removeSessionStateCallbacksListener(this)
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+rtcSession.addSessionCallbacksListener(this)
+rtcSession.removeSessionCallbacksListener(this)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+rtcSession.addSessionCallbacksListener(this);
+rtcSession.removeSessionCallbacksListener(this);
+```
+
+</TabItem>
+</Tabs>
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+/**
+ * Called in case when connection with the opponent is established
+ */
+override fun onConnectedToUser(session: P2PSession, userId: Int){}
+
+/\*\*
+
+- Called in case when connection is closed
+  \*/
+  override fun onConnectionClosedForUser(session: P2PSession, userId: Int) {}
+
+/\*\*
+
+- Called in case when the opponent is disconnected
+  \*/
+  override fun onDisconnectedFromUser(session: P2PSession, userId: Int) {}
+
+/\*\*
+
+- Called in case when session state has changed
+  \*/
+  override fun onStateChanged(session: P2PSession, state: BaseSession.RTCSessionState) {}
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+/**
+ * Called in case when connection with the opponent is established
+ */
+override fun onConnectedToUser(session: RTCSession, userID: Int){}
+
+/**
+ * Called in case when connection is closed
+ */
+override fun onConnectionClosedForUser(session: RTCSession, userID: Int) {}
+
+/**
+ * Called in case when the opponent is disconnected
+ */
+override fun onDisconnectedFromUser(session: RTCSession, userID: Int) {}
+
+/**
+ * Called in case when connection establishment process is started
+ */
+override fun onStartConnectToUser(session: RTCSession, userID: Int) {}
+
+/**
+ * Called in case when the opponent is disconnected by timeout
+ */
+override fun onDisconnectedTimeoutFromUser(session: RTCSession, userID: Int) {}
+
+/**
+ * Called in case when connection has failed with the opponent
+ */
+override fun onConnectionFailedWithUser(session: RTCSession, userID: Int) {}
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+/**
+ * Called in case when connection with the opponent is established
+ */
+void onConnectedToUser(RTCSession session, Integer userID);
+
+/\*\*
+
+- Called in case when connection is closed
+  \*/
+  void onConnectionClosedForUser(RTCSession session, Integer userID);
+
+/\*\*
+
+- Called in case when the opponent is disconnected
+  \*/
+  void onDisconnectedFromUser(RTCSession session, Integer userID);
+
+/\*\*
+
+- Called in case when connection establishment process is started
+  \*/
+  void onStartConnectToUser(RTCSession session, Integer userID);
+
+/\*\*
+
+- Called in case when the opponent is disconnected by timeout
+  \*/
+  void onDisconnectedTimeoutFromUser(RTCSession session, Integer userID);
+
+/\*\*
+
+- Called in case when connection has failed with the opponent
+  \*/
+  void onConnectionFailedWithUser(RTCSession session, Integer userID);
+
+```
+
+</TabItem>
+</Tabs>
+
+## Tackling Network changes
+
+If a user's network environment changes (e.g., switching from Wi-Fi to mobile data), the existing call connection might no longer be valid. Normally, in a case of short network interruptions, the ConnectyCube SDK will automatically restore the call so you can see via `RTCSessionStateCallback` callback with `peer connections state` changing to `onDisconnectedFromUser` and then again to `onConnectedToUser`.
+
+But not all cases are the same, and in some of them the connection needs to be **manually** refreshed due to various issues like NAT or firewall behavior changes or even longer network environment changes, e.g. when a user is offline for more than 30 seconds.
+
+This is where ICE restart helps to re-establish the connection to find a new network path for communication.
+
+The correct and recommended way for an application to handle all such 'bad' cases is to trigger an ICE restart when the connection state goes to either `FAILED` or `DISCONNECTED` for an extended period of time (e.g. > 30 seconds).
+
+  
+```kotlin
+  code snippet with ice restart (coming soon)
+```
+
+## Mute audio
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val localAudioTrack: ConnectycubeAudioTrack? = session.mediaStreamManager.localAudioTrack
+
+// mute
+localAudioTrack.enabled = false
+
+// unmute
+localAudioTrack.enabled = true
+
+// is muted?
+val isEnabled = localAudioTrack.enabled
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val localAudioTrack: ConnectycubeAudioTrack? = session.mediaStreamManager.localAudioTrack
+
+// mute
+localAudioTrack.enabled = false
+
+// unmute
+localAudioTrack.enabled = true
+
+// is muted?
+val isEnabled = localAudioTrack.enabled
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCAudioTrack localAudioTrack = currentSession.getMediaStreamManager().getLocalAudioTrack();
+
+// mute
+localAudioTrack.setEnabled(false);
+
+// unmute
+localAudioTrack.setEnabled(true);
+
+// is muted?
+boolean isEnabled = localAudioTrack.enabled();
+````
+
+</TabItem>
+</Tabs>
+
+`getMediaStreamManager()` method returns an instance of `RTCMediaStreamManager`.
+
+> **Note**:
+> Pay attention, `RTCMediaStreamManager` is attached to `RTCSession` lifecycle. According to `RTCSession` lifecycle, you should use `RTCMediaStreamManager` only when `RTCSession` is active.
+
+## Mute video
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val localVideoTrack: ConnectycubeVideoTrack? = session.mediaStreamManager.localVideoTrack
+
+// mute
+localVideoTrack.enabled = false
+
+// unmute
+localVideoTrack.enabled = true
+
+// is muted?
+val isEnabled = localVideoTrack.enabled
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val localVideoTrack: RTCVideoTrack =
+    currentSession.getMediaStreamManager().getLocalVideoTrack()
+
+// mute
+localVideoTrack.setEnabled(false)
+
+// mute
+localVideoTrack.setEnabled(true)
+
+// is muted?
+val isEnabled = localVideoTrack.enabled()
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCVideoTrack localVideoTrack = currentSession.getMediaStreamManager().getLocalVideoTrack();
+
+// mute
+localVideoTrack.setEnabled(false);
+
+// mute
+localVideoTrack.setEnabled(true);
+
+// is muted?
+boolean isEnabled = localVideoTrack.enabled();
+
+````
+
+</TabItem>
+</Tabs>
+
+## Switch camera
+
+You can switch the video camera during a call (default is front camera):
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val videoCapturer = session.mediaStreamManager.videoCapturer
+videoCapturer.switchCamera(cameraSwitchHandler)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val videoCapturer =
+    currentSession.getMediaStreamManager().getVideoCapturer() as RTCCameraVideoCapturer
+
+videoCapturer.switchCamera(cameraSwitchHandler)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCCameraVideoCapturer videoCapturer = (RTCCameraVideoCapturer)currentSession.getMediaStreamManager().getVideoCapturer();
+
+videoCapturer.switchCamera(cameraSwitchHandler);
+````
+
+</TabItem>
+</Tabs>
+
+## Screen sharing
+
+Screen sharing allows you to share information from your application to all of your opponents. It gives you an ability to
+promote your product, share a screen with formulas to students, distribute podcasts, share video/audio/photo moments
+of your life in real-time all over the world.
+
+> **Note**:
+> Pay attention! Screen sharing feature works only on devices with Android 5 (LollyPop) and newer.
+
+To simplify using this feature we prepared special `RTCScreenCapturer` class.
+
+To implement this feature in your application you should do **3** simple steps:
+
+##### 1. Request projection permission from user:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+RTCScreenCapturer.requestPermissions(this)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCScreenCapturer.requestPermissions(this);
+```
+
+</TabItem>
+</Tabs>
+
+##### 2. Listen to granted permission inside Activity (or Fragment):
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
+    ...
+
+    if (requestCode == RTCScreenCapturer.REQUEST_MEDIA_PROJECTION) {
+        if (resultCode == Activity.RESULT_OK) {
+            startScreenSharing(data!!)
+            Log.i(TAG, "Starting screen capture")
+        } else {
+            Toast.makeText(applicationContext, "You cannot continue without an access to screen", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+    ...
+
+    if (requestCode == RTCScreenCapturer.REQUEST_MEDIA_PROJECTION) {
+        if (resultCode == Activity.RESULT_OK) {
+            startScreenSharing(data);
+            Log.i(TAG, "Starting screen capture");
+        } else {
+            Toast.makeText(getApplicationContext(), "You cannot continue without an access to screen", Toast.LENGTH_SHORT).show();
+        }
+    }
+}
+````
+
+</TabItem>
+</Tabs>
+
+##### 3. Set `RTCScreenCapturer` as current video capturer:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+rtcSession.mediaStreamManager.videoCapturer = RTCScreenCapturer(data, null)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+rtcSession.getMediaStreamManager().setVideoCapturer(new RTCScreenCapturer(data, null));
+```
+
+</TabItem>
+</Tabs>
+
+> **Note**:
+> To create instance of `RTCScreenCapturer` need use `data` from **permission request**
+
+## Configure general settings
+
+`RTCConfig` provides an interface to customize some SDK video chat settings:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+/**
+* add to list ice servers.
+*/
+WebRTCConfig.iceServerList.add(ConnectycubeIceServer(uri, userName, password))
+
+//Coming soon
+//DialingTimeInterval, AnswerTimeInterval
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+/**
+ * Set dialing time interval
+ * Default value is 5 sec
+ */
+fun setDialingTimeInterval(dialingTimeInterval: Long) {}
+
+/**
+ * Set answer time interval
+ * Default value is 60 sec
+ */
+fun setAnswerTimeInterval(answerTimeInterval: Long) {}
+
+/**
+ * Set max connections in conference
+ * Default value is 10
+ */
+fun setMaxOpponentsCount(maxOpponentsCount: Int) {}
+
+/**
+ * Set max allowed time to repair a connection after it was lost.
+ * Default value is 10 sec
+ */
+fun setDisconnectTime(disconnectTime: Int) {}
+
+/**
+ * Set list of ice servers.
+ */
+fun setIceServerList(iceServerList: List<IceServer>) {}
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+/**
+ * Set dialing time interval
+ * Default value is 5 sec
+ */
+public static void setDialingTimeInterval(long dialingTimeInterval);
+
+/\*\*
+
+- Set answer time interval
+- Default value is 60 sec
+  \*/
+  public static void setAnswerTimeInterval(long answerTimeInterval);
+
+/\*\*
+
+- Set max connections in conference
+- Default value is 10
+  \*/
+  public static void setMaxOpponentsCount(Integer maxOpponentsCount);
+
+/\*\*
+
+- Set max allowed time to repair a connection after it was lost.
+- Default value is 10 sec
+  \*/
+  public static void setDisconnectTime(Integer disconnectTime);
+
+/\*\*
+
+- Set list of ice servers.
+  \*/
+  public static void setIceServerList(List<PeerConnection.IceServer> iceServerList);
+
+````
+
+</TabItem>
+</Tabs>
+
+For example, you can customize a list of ICE servers that SDK uses. WebRTC engine will choose the TURN relay with the lowest round-trip time. Thus, setting multiple TURN servers allows your application to scale-up in terms of bandwidth and number of users:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+WebRTCConfig.iceServerList.add(
+		ConnectycubeIceServer(
+				"turn:numb.default.com",
+				"default@default.com",
+				"default@default.com"
+		)
+)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val iceServerList: MutableList<IceServer> = LinkedList()
+    iceServerList.add(
+        IceServer(
+            "turn:numb.default.com",
+            "default@default.com",
+            "default@default.com"
+        )
+    )
+
+RTCConfig.setIceServerList(iceServerList)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+List<PeerConnection.IceServer> iceServerList = new LinkedList<>();
+iceServerList.add(new PeerConnection.IceServer("turn:numb.default.com", "default@default.com", "default@default.com"));
+RTCConfig.setIceServerList(iceServerList);
+````
+
+</TabItem>
+</Tabs>
+
+## Configure media settings
+
+You can use `RTCMediaConfig` class instance to configure a various list of media settings like video/audio codecs, bitrate, fps etc:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//WebRTCMediaConfig
+var audioCodec: AudioCodec =  AudioCodec.ISAC
+var videoCodec: VideoCodec? = null
+var videoWidth = 0
+var videoHeight = 0
+var videoFps = 0
+var audioStartBitrate = 0
+var videoStartBitrate = 0
+var videoHWAcceleration = false
+var useOpenSLES = false //Allow OpenSL ES audio if device supports it
+var useBuildInAEC = true  //Enable built-in AEC if device supports
+var audioProcessingEnabled = true //Enabling/Disabling audio processing - added for audio performance
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+fun setAudioCodec(audioCodec: RTCMediaConfig.AudioCodec) {}
+
+fun setVideoCodec(videoCodec: VideoCodec) {}
+
+fun setVideoWidth(videoWidth: Int) {}
+
+fun setVideoHeight(videoHeight: Int) {}
+
+fun setVideoFps(videoFps: Int) {}
+
+fun setVideoStartBitrate(videoStartBitrate: Int) {}
+
+fun setAudioStartBitrate(audioStartBitrate: Int) {}
+
+fun setVideoHWAcceleration(videoHWAcceleration: Boolean) {}
+
+fun setUseBuildInAEC(useBuildInAEC: Boolean) {} // Enable built-in AEC if device supports it
+
+fun setUseOpenSLES(useOpenSLES: Boolean) {} //Allow OpenSL ES audio if device supports it
+
+fun setAudioProcessingEnabled(audioProcessingEnabled: Boolean) {} //Enabling/Disabling audio processing - added for audio performance.
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+public static void setAudioCodec(AudioCodec audioCodec);
+
+public static void setVideoCodec(VideoCodec videoCodec);
+
+public static void setVideoWidth(int videoWidth);
+
+public static void setVideoHeight(int videoHeight);
+
+public static void setVideoFps(int videoFps);
+
+public static void setVideoStartBitrate(int videoStartBitrate);
+
+public static void setAudioStartBitrate(int audioStartBitrate);
+
+public static void setVideoHWAcceleration(boolean videoHWAcceleration);
+
+public static void setUseBuildInAEC(boolean useBuildInAEC); // Enable built-in AEC if device supports it
+
+public static void setUseOpenSLES(boolean useOpenSLES); //Allow OpenSL ES audio if device supports it
+
+public static void setAudioProcessingEnabled(boolean audioProcessingEnabled); //Enabling/Disabling audio processing - added for audio performance.
+````
+
+</TabItem>
+</Tabs>
+
+## WebRTC Stats reporting
+
+Stats reporting is an insanely powerful tool which can help to debug a call if there are any problems with it
+(e.g. lags, missing audio/video etc.). To enable stats report you should first set stats reporting frequency using `RTCConfig`
+method below:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//Coming soon
+//ConnectycubeStatsReport
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+RTCConfig.setStatsReportInterval(5) // receive stats report every 5 seconds
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCConfig.setStatsReportInterval(5); // receive stats report every 5 seconds
+```
+
+</TabItem>
+</Tabs>
+
+Now you will be able to receive a client delegate callback and perform operations with `RTCStatsReport` instance for the
+current period of time:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+//Coming soon
+//ConnectycubeStatsReport
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val rtcSession: RTCSession = ...
+
+rtcSession.addStatsReportCallback { rtcStatsReport, userId ->
+Log.i(TAG, "Full report = $rtcStatsReport")
+Log.i(TAG, "Report by user = $userId")
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCSession rtcSession = ...;
+
+rtcSession.addStatsReportCallback(new RTCStatsReportCallback() {
+    @Override
+    public void onStatsReportUpdate(RTCStatsReport rtcStatsReport, Integer userId) {
+        Log.i(TAG, "Full report = " + rtcStatsReport);
+        Log.i(TAG, "Report by user = " + userId);
+    }
+});
+````
+
+</TabItem>
+</Tabs>
+
+You can also use stats reporting to see who is currently talking in a group call. You must use `audioReceiveOutputLevel` for that.
+
+Take a look to the `RTCStatsReport` to see all of the other stats properties that might be useful for you.
+
+## Group video calls
+
+Because of [Mesh architecture](https://webrtcglossary.com/mesh/) we use for multipoint where every participant sends and receives its media to all other participants, current solution supports group calls with up to 4 people.
+
+Also ConnectyCube provides an alternative solution for up to 12 people - [Multiparty Video Conferencing API](/android/videocalling-conference).
+
+## Call recording
+
+Coming soon

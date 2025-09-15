@@ -1,0 +1,327 @@
+---
+import BxlMediumSquare from '~icons/bxl/medium-square';
+import { Icon } from '@astrojs/starlight/components';
+---
+
+<footer id="cCube_footer">
+	<div class="cCube_container">
+		<div class="cCube_footer-block">
+			<div class="cCube_footer-info">
+				<a href="/">
+					<div class="cCube_footer-logo"></div>
+					<span class="hidden-anchor-text">ConnectyCube</span>
+				</a>
+				<span class="cCube_footer-copyright"
+					>Copyright © 2025 ConnectyCube, 2025 All Rights Reserved
+				</span>
+			</div>
+			<div class="icons-container">
+				<a
+					href="https://medium.com/@connectycube"
+					class="sl-flex link"
+					rel="me"
+					target="_blank"
+				>
+					<span class="sr-only">Medium</span>
+					<BxlMediumSquare class="icon" aria-hidden width="16" height="16" />
+				</a>
+				<a
+					href="https://github.com/ConnectyCube"
+					class="sl-flex link"
+					rel="me"
+					target="_blank"
+				>
+					<span class="sr-only">Github</span>
+					<Icon name="github" label="Github" class="icon" />
+				</a>
+				<a
+					href="https://www.linkedin.com/company/connectycube"
+					class="sl-flex link"
+					rel="me"
+					target="_blank"
+				>
+					<span class="sr-only">LinkedIn</span>
+					<Icon name="linkedin" label="LinkedIn" class="icon" />
+				</a>
+				<a
+					href="https://twitter.com/connectycube"
+					class="sl-flex link"
+					rel="me"
+					target="_blank"
+				>
+					<span class="sr-only">Twitter</span>
+					<Icon name="x.com" label="X" class="icon" />
+				</a>
+				<a
+					href="https://www.facebook.com/ConnectyCube"
+					class="sl-flex link"
+					rel="me"
+					target="_blank"
+				>
+					<span class="sr-only">Facebook</span>
+					<Icon name="facebook" label="Facebook" class="icon" />
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<div class="cCube_footer-links">
+		<div class="cCube_footer-links-column">
+			<h3>Development</h3>
+			<a class="cCube_footer-link-item" href="/flutter/">Flutter</a>
+			<a class="cCube_footer-link-item" href="/reactnative/">React Native</a>
+			<a class="cCube_footer-link-item" href="/js/">Web</a>
+			<a class="cCube_footer-link-item" href="/cordova/">Cordova</a>
+			<a class="cCube_footer-link-item" href="/nativescript/">Native Script</a>
+			<a class="cCube_footer-link-item" href="/ios/">iOS</a>
+			<a class="cCube_footer-link-item" href="/android/">Android</a>
+			<a class="cCube_footer-link-item" href="/server/">Server</a>
+		</div>
+		<div class="cCube_footer-links-column">
+			<h3>Solutions</h3>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/healthcare/">Healthcare</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/social-apps/">Social Apps</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/banking/">Banking</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/recruiting/">Recruiting</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/real-estate/">Real Estate</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/marketplaces/">Marketplaces</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/educational-apps/">Educational Apps</a
+			>
+		</div>
+		<div class="cCube_footer-links-column">
+			<h3>Offerings</h3>
+			<a
+				class="cCube_footer-link-item"
+				href="https://connectycube.com/features/"
+				target="_blank">Features</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				href="https://connectycube.com/pricing/"
+				target="_blank">Pricing</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				href="https://connectycube.com/messenger/"
+				target="_blank">Messenger</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				href="https://connectycube.com/teatalk/"
+				target="_blank">TeaTalk</a
+			>
+		</div>
+		<div class="cCube_footer-links-column">
+			<h3>Contact us</h3>
+			<a class="cCube_footer-link-item" href="mailto:sales@connectycube.com"
+				>sales@connectycube.com</a
+			>
+			<a class="cCube_footer-link-item" href="mailto:support@connectycube.com"
+				>support@connectycube.com</a
+			>
+			<a class="cCube_footer-link-item" href="https://discord.gg/zqbBWNCCFJ"
+				>Discord</a
+			>
+			<h3>Legal</h3>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/terms-of-use/">Terms & Conditions</a
+			>
+			<a
+				class="cCube_footer-link-item"
+				target="_blank"
+				href="https://connectycube.com/privacy-policy/">Privacy Policy</a
+			>
+		</div>
+	</div>
+</footer>
+
+<style>
+	#cCube_footer {
+		background-color: var(--sl-home-page-footer-bg-color);
+		padding: 40px 24px;
+		white-space: nowrap;
+	}
+	#cCube_footer > .cCube_container {
+		position: relative;
+		max-width: 1080px;
+		margin: 0 auto;
+		z-index: 10;
+	}
+	.cCube_footer-block {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: space-between;
+		margin-bottom: 30px;
+	}
+	.cCube_footer-info {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: center;
+	}
+	.cCube_footer-info > span {
+		max-width: 225px;
+		text-wrap-mode: wrap;
+	}
+	.cCube_footer-logo {
+		height: 50px;
+		width: 50px;
+		margin-right: 9px;
+		background-image: url('../assets/footer/logo.svg');
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: contain;
+	}
+	.cCube_footer-copyright {
+		color: #ffffff;
+		font-family: 'Poppins-Light', system-ui;
+		font-weight: 400;
+		font-size: 14px;
+		line-height: 18px;
+		text-align: left;
+	}
+	.cCube_footer-links {
+		display: flex;
+		max-width: 1080px;
+		margin: 0 auto;
+		flex-direction: row;
+		align-items: flex-start;
+		justify-content: space-between;
+	}
+	.cCube_footer-links-column {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: flex-start;
+	}
+	.cCube_footer-links-column > h3 {
+		color: #ffffff;
+		width: 175px;
+		font-family: 'MADE-Tommy-Soft-Regular', system-ui;
+		font-weight: 500;
+		font-size: 16px;
+		line-height: 24px;
+		text-align: left;
+		margin-top: 32px;
+		padding-bottom: 16px;
+		border-bottom: 1px solid #ffffff;
+	}
+	.cCube_footer-links-column > a.cCube_footer-link-item {
+		color: #ffffff !important;
+		font-family: 'MADE-Tommy-Soft-Light', system-ui;
+		font-weight: 400;
+		font-size: 14px;
+		line-height: 20px;
+		text-align: left;
+		padding-top: 16px;
+		text-decoration: none;
+	}
+	.cCube_footer-links-column > a.cCube_footer-link-item:hover,
+	.cCube_footer-links-column > a.cCube_footer-link-item:focus {
+		text-decoration: underline;
+	}
+
+	.hidden-anchor-text {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		border: 0;
+	}
+
+	.icons-container {
+		display: flex;
+		align-items: center;
+	}
+	.link {
+		padding: 0.5rem;
+	}
+
+	.icon {
+		width: 24px;
+		height: 24px;
+		cursor: pointer;
+		color: var(--sl-home-page-footer-icon-color);
+	}
+
+	.icon:hover {
+		opacity: 0.66;
+	}
+
+	@media screen and (max-width: 768px) {
+		.cCube_footer-block {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			justify-content: flex-start;
+			margin-bottom: 0;
+		}
+		.cCube_footer-logo {
+			height: 36px;
+			width: 36px;
+		}
+		.cCube_footer-info {
+			margin-bottom: 12px;
+		}
+		.cCube_footer-links {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			justify-content: flex-start;
+		}
+		.cCube_footer-links-column {
+			margin-left: 45px;
+		}
+		.cCube_footer-links-column > h3 {
+			margin-top: 16px;
+			font-size: 15px;
+			line-height: 22.5px;
+			padding-bottom: 6px;
+		}
+		.cCube_footer-links-column > a.cCube_footer-link-item {
+			font-size: 13px;
+			line-height: 19px;
+			padding-top: 6px;
+		}
+	}
+
+	@media screen and (max-width: 368px) {
+		.cCube_container {
+			padding-left: 16px;
+			padding-right: 16px;
+		}
+	}
+</style>

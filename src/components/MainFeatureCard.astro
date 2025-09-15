@@ -1,0 +1,196 @@
+---
+import NavLink from './NavLink.astro';
+import type { LinkType } from '../data/types';
+
+const { title, description, icon, navigateTo, links } = Astro.props;
+const linksExist = links && links.length > 0;
+---
+
+<div class="card">
+	<div>
+		<div class="title-container">
+			<span class={icon}></span>
+			<h2>{title}</h2>
+		</div>
+		<p class="description">{description}</p>
+	</div>
+	<div class="buttons-container">
+		{
+			linksExist && (
+				<div class="links-container">
+					{links.map(({ href, title, target }: LinkType) => (
+						<NavLink
+							href={href}
+							title={title}
+							target={target}
+							size="bold"
+							isIcon={true}
+						/>
+					))}
+				</div>
+			)
+		}
+		<a href={navigateTo.href} class="button">
+			<span set:html={navigateTo.title} />
+		</a>
+	</div>
+</div>
+
+<style>
+	:root[data-theme='dark'] .title-container > span.chat-and-messaging {
+		background-image: url('../assets/home/chat-and-messaging-dark.svg');
+	}
+	:root[data-theme='dark'] .title-container > span.chat-widget {
+		background-image: url('../assets/home/chat-widget-dark.svg');
+	}
+	:root[data-theme='dark'] .title-container > span.voice-and-video-calling {
+		background-image: url('../assets/home/voice-and-video-calling-dark.svg');
+	}
+	:root[data-theme='light'] .title-container > span.chat-and-messaging {
+		background-image: url('../assets/home/chat-and-messaging.svg');
+	}
+	:root[data-theme='light'] .title-container > span.chat-widget {
+		background-image: url('../assets/home/chat-widget.svg');
+	}
+	:root[data-theme='light'] .title-container > span.voice-and-video-calling {
+		background-image: url('../assets/home/voice-and-video-calling.svg');
+	}
+
+	.card {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 22px;
+		margin: 0px;
+		border-radius: 8px;
+		border: 1px solid var(--sl-home-page-overview-card-border-color);
+		background-color: var(--sl-card-bg-color);
+		box-shadow:
+			0px 2px 4px 0px rgba(7, 8, 30, 0.04),
+			0px 2px 8px 0px rgba(7, 8, 30, 0.08);
+	}
+
+	.title-container {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.title-container > h2 {
+		font-family: 'RadikalTrial-Bold', system-ui;
+		font-size: 30px;
+		font-weight: 700;
+		font-style: normal;
+		line-height: 1.4em;
+		margin-top: 0;
+		color: var(--sl-color-white);
+	}
+
+	.title-container > span {
+		display: block;
+		height: 35px;
+		width: 35px;
+		margin-right: 12px;
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: contain;
+	}
+
+	.description {
+		text-align: center;
+		font-family: 'RadikalTrial-Regular', system-ui;
+		font-size: 16px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 1.4em;
+		margin-top: 20px;
+		color: var(--sl-color-white);
+	}
+
+	.buttons-container {
+		margin: 0px;
+	}
+
+	.button {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 12px 24px;
+		gap: 10px;
+		margin-top: 1.5rem;
+		border-radius: 8px;
+		text-decoration: none;
+		background: var(--sl-color-accent-2);
+	}
+
+	.button > span {
+		color: #fff;
+		font-family: 'RadikalTrial-Medium', system-ui;
+		font-size: 20px;
+		font-style: normal;
+		font-weight: 500;
+		line-height: normal;
+	}
+
+	.links-container {
+		display: flex;
+		justify-content: space-between;
+		margin: 1.5rem auto 0px auto;
+		gap: 0.5rem;
+	}
+
+	.links-container > a {
+		display: flex;
+		margin: 0px;
+		font-family: 'RadikalTrial-Bold', system-ui;
+		font-size: 16px;
+		font-style: normal;
+		font-weight: 700;
+		line-height: normal;
+		text-decoration-line: underline;
+		text-decoration-style: solid;
+		text-decoration-skip-ink: none;
+		text-decoration-thickness: auto;
+		text-underline-offset: auto;
+		text-underline-position: from-font;
+		color: var(--primary-5, #2f99ae);
+	}
+
+	.arrow-right {
+		width: 24px;
+		height: 24px;
+		margin-left: 12px;
+		color: var(--primary-5, #2f99ae);
+	}
+
+	@media screen and (max-width: 1280px) {
+		.title-container > h2 {
+			font-size: 23px;
+		}
+	}
+
+	@media screen and (max-width: 768px) {
+		.title-container > h2 {
+			font-size: 22px;
+		}
+		.description {
+			font-size: 15px;
+		}
+		.button > span {
+			font-size: 18px;
+		}
+	}
+
+	@media screen and (max-width: 380px) {
+		.title-container > h2 {
+			font-size: 21px;
+		}
+		.description {
+			font-size: 14px;
+		}
+		.button > span {
+			font-size: 17px;
+		}
+	}
+</style>

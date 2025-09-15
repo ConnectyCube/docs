@@ -1,0 +1,392 @@
+---
+title: Streaming
+description: Leverage ConnectyCube's streaming feature for dynamic real-time interactions in Android app. Ideal for interactive sessions, such as teachers broadcasting to multiple students.
+head:
+  - tag: title
+    content: Android Streaming API | ConnectyCube
+sidebar:
+  label: Streaming
+  order: 7
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+ConnectyCube **Streaming API** is built on top of [WebRTC](https://webrtc.org/) protocol and based on top of [WebRTC SFU](https://webrtcglossary.com/sfu/) architecture.
+
+Max people per Conference call is 12.
+
+Streaming API is available starting from [Advanced plan](https://connectycube.com/pricing/).
+
+## Features supported
+
+- Streaming/listening video/audio
+- Join-Rejoin stream functionality
+- Guest rooms
+- Mute/Unmute audio/video stream
+- Display bitrate
+- Switch video input device (camera)
+
+## Code samples
+
+To be announced later. Please [contact us](https://connectycube.com/contact/) if you have any requirements.
+
+## Prerequisites
+
+Streaming API is based on top of regular [Multiparty Video Conferencing API ](/android/videocalling-conference), so it's good to learn its API as well.
+
+## Connect SDK
+
+For using Streaming feature you should add a dependency (only for V1):
+
+#### SDK v1 kotlin (deprecated)
+
+```groovy
+implementation "com.connectycube:connectycube-android-sdk-videochat-conference:$sdkVersion"
+```
+
+## Streaming sessions
+
+There are two sessions for handling `streaming` process in a easy way:
+
+**ConferenceStreamingSession** - is a session within certain video room, managing the streaming current processes.  
+**ConferenceWatchingSession** - is a session within certain video room, managing the watching current stream processes.
+
+## Common Callbacks
+
+In order to have an ability to receive callbacks about current `session` instance state and conference events, you should implement appropriate interfaces:
+
+Implement `RTCSessionStateCallback` for tracking connection state:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val sessionStateCallback = object: RTCSessionStateCallback<ConferenceStreamBaseSession> {
+    /**
+     * Called when session state is changed
+     */
+    override fun onStateChanged(session: ConferenceStreamBaseSession, state: BaseSession.RTCSessionState) {}
+
+    /**
+     * Called in case when opponent disconnected
+     */
+    override fun onDisconnectedFromUser(session: ConferenceStreamBaseSession, userID: Int) {}
+
+    /**
+     * Called in case when connection with opponent is established
+     */
+    override fun onConnectedToUser(session: ConferenceStreamBaseSession, userID: Int) {}
+
+    /**
+     * Called in case when connection closed with certain user.
+     */
+    override fun onConnectionClosedForUser(session: ConferenceStreamBaseSession, userID: Int) {}
+
+}
+
+currentSession.addSessionCallbacksListener(sessionStateCallback)
+//currentSession.removeSessionCallbacksListener(sessionStateCallback)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCSessionStateCallback sessionStateCallback = new RTCSessionStateCallback<ConferenceStreamBaseSession>(){
+    /**
+    * Called when session state is changed
+    */
+    void onStateChanged(ConferenceStreamBaseSession session, BaseSession.RTCSessionState state);
+
+    /**
+    * Called in case when connection with opponent is established
+    */
+    void onConnectedToUser(ConferenceStreamBaseSession session, Integer userID);
+
+    /**
+    * Called in case when opponent disconnected
+    */
+    void onDisconnectedFromUser(ConferenceStreamBaseSession session, Integer userID);
+
+    /**
+    * Called in case when connection closed with certain user.
+    */
+    void onConnectionClosedForUser(ConferenceStreamBaseSession session, Integer userID);
+}
+
+  currentSession.addSessionCallbacksListener(sessionStateCallback);
+//currentSession.removeSessionCallbacksListener(sessionStateCallback);
+````
+
+</TabItem>
+</Tabs>
+
+Implement `ConferenceStateListener` for tracking conference events:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+var stateListener: ConferenceStateListener<ConferenceStreamBaseSession> = object : ConferenceStateListener<ConferenceBaseSession> {
+    override fun onSlowLinkReceived(uplink: Boolean, nacks: Int) {}
+
+    override fun onError(e: WsException) {}
+
+    override fun onSessionClosed(conferenceBaseSession: ConferenceStreamBaseSession) {}
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceStateListener<ConferenceStreamBaseSession> stateListener = new ConferenceStateListener<ConferenceStreamBaseSession>() {
+    @Override
+    public void onSlowLinkReceived(boolean uplink, int nacks) {}
+    @Override
+    public void onError(WsException e) {
+    // e.g. handling exception for watchSession
+        if (ex.getCause() != null && ConferenceWatchingSession.SUBSCRIBE_ERROR_CAUSE_NO_STREAM.equals(ex.getCause().getMessage())) {
+            watchSession.stopWatching();
+        }
+    }
+    @Override
+    public void onSessionClosed(ConferenceStreamBaseSession conferenceBaseSession) {}
+};
+````
+
+</TabItem>
+</Tabs>
+
+## Video and Audio tracks
+
+For obtaining video and audio tracks implement interface `RTCClientVideoTracksCallback<ConferenceStreamBaseSession>` and `RTCClientAudioTracksCallback<ConferenceStreamBaseSession>`.
+
+For setting video track for ConferenceSession - the `ConferenceStreamSurfaceView` class is provided.
+
+## ConferenceStreamClient
+
+`ConferenceStreamClient` instance is a client model responsible for managing conference streaming session.
+
+## ConferenceStreamingSession
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val streamSession = ConferenceStreamClient.getInstance(context).createStreamSession(currentUser.getId(), RTCTypes.ConferenceType.CONFERENCE_TYPE_VIDEO)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceStreamingSession streamSession = ConferenceStreamClient.getInstance(context).createStreamSession(currentUser.getId(), RTCTypes.ConferenceType.CONFERENCE_TYPE_VIDEO);
+```
+
+</TabItem>
+</Tabs>
+
+**Callbacks**
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+var streamingListener: ConferenceStreamingSession.ConferenceStreamingListener = object : ConferenceStreamingSession.ConferenceStreamingListener {
+    override fun onStartStreaming() {}
+
+    override fun onStopStreaming() {}
+
+    override fun onWatcherReceived(userId: Int) {}
+
+    override fun onWatcherLeft(userId: Int) {}
+
+}
+streamSession.addEventListener(streamingListener);
+// streamSession.removeEventListener(streamingListener);
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceStreamingSession.ConferenceStreamingListener streamingListener = new ConferenceStreamingSession.ConferenceStreamingListener() {
+    @Override
+    public void onStartStreaming() {
+        //your video/audio is successfully streaming
+    }
+    @Override
+    public void onStopStreaming() {
+        //your video/audio has stopped
+    }
+    @Override
+    public void onWatcherReceived(Integer userId) {
+        //some user has connected to your stream
+    }
+    @Override
+    public void onWatcherLeft(Integer userId) {
+        //some user has disconnected from your stream
+    }
+};
+
+   streamSession.addEventListener(streamingListener);
+// streamSession.removeEventListener(streamingListener);
+````
+
+</TabItem>
+</Tabs>
+
+## Start and stop streaming
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+streamSession.startStreaming(roomId)
+...
+streamSession.stopStreaming()
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+streamSession.startStreaming(roomId);
+...
+streamSession.stopStreaming();
+```
+
+</TabItem>
+</Tabs>
+
+## ConferenceWatchingSession
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val watchingSession = ConferenceStreamClient.getInstance(context).createWatchingSession(currentUser.getId())
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceWatchingSession watchingSession = ConferenceStreamClient.getInstance(context).createWatchingSession(currentUser.getId());
+```
+
+</TabItem>
+</Tabs>
+
+**Callbacks**
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val watchingListener: ConferenceWatchingSession.ConferenceWatchingListener = object : ConferenceWatchingSession.ConferenceWatchingListener {
+    override fun onStartWatching() {}
+
+    override fun onStopWatching() {}
+
+    override fun onPublishersReceived(userIds: ArrayList<Int>) {}
+
+    override fun onPublisherLeft(userId: Int) {}
+
+}
+watchingSession.addEventListener(watchingListener);
+// watchingSession.removeEventListener(watchingListener);
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceWatchingSession.ConferenceWatchingListener watchingListener = new ConferenceWatchingSession.ConferenceWatchingListener() {
+    @Override
+    public void onStartWatching() {
+		//your user successfully has become a watcher of the broadcasting stream
+    }
+    @Override
+    public void onStopWatching() {
+		//your user stopped watching the broadcasting stream
+    }
+    @Override
+    public void onPublishersReceived(ArrayList<Integer> userIds) {
+		//while you are watching some stream, or ready to, you can get some streaming user, and (if you want) subscribe to it
+		//watchingSession.subscribeToPublisher(userIds(0));
+    }
+    @Override
+    public void onPublisherLeft(Integer userId) {
+		//your streaming user has left
+		watchingSession.stopWatching();
+    }
+};
+   watchingSession.addEventListener(watchingListener);
+// watchingSession.removeEventListener(watchingListener);
+````
+
+</TabItem>
+
+</Tabs>
+
+## Start and stop watching
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Coming soon
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+watchingSession.startWatching(roomId)
+...
+watchingSession.stopWatching()
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+watchingSession.startWatching(roomId);
+...
+watchingSession.stopWatching();
+```
+
+</TabItem>
+</Tabs>

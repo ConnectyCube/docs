@@ -1,0 +1,79 @@
+---
+import HeroiconsSolidArrowRight from '~icons/heroicons-solid/arrow-right';
+
+const { href, title, target = '_self' } = Astro.props;
+---
+
+<div class="link-card-container">
+	<span>
+		<a href={href} target={target}>
+			<span class="title" set:html={title} />
+		</a>
+	</span>
+	<HeroiconsSolidArrowRight class="icon" aria-hidden />
+</div>
+
+<style>
+	.link-card-container {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding: 24px;
+		box-shadow: 0px 2px 8px 0px var(--sl-card-shadow);
+		border-radius: 8px;
+		cursor: pointer;
+		border: 1px solid var(--sl-color-black);
+		background-color: var(--sl-nav-link-card-bg);
+	}
+
+	.title {
+		display: block;
+		padding-right: 35px;
+		font-family: 'RadikalTrial-Medium', system-ui;
+		font-size: 16px;
+		font-weight: 500;
+		font-style: normal;
+		line-height: 1.5em;
+		color: var(--sl-home-page-text-color);
+	}
+
+	.icon {
+		width: 24px;
+		height: 24px;
+		color: var(--sl-color-accent);
+	}
+
+	a {
+		text-decoration: none;
+		line-height: var(--sl-line-height-headings);
+	}
+
+	/* Hover state */
+	.link-card-container:hover {
+		border-color: var(--sl-color-gray-2);
+	}
+
+	.link-card-container:hover .icon {
+		color: var(--sl-color-white);
+	}
+
+	@media screen and (max-width: 1024px) {
+		.title {
+			font-size: 15px;
+		}
+	}
+
+	@media screen and (max-width: 768px) {
+		.home-bottom-section {
+			flex-direction: column;
+		}
+
+		.home-bottom-section > img {
+			max-width: 70%;
+		}
+		.title {
+			font-size: 15px;
+		}
+	}
+</style>

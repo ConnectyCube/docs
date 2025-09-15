@@ -1,0 +1,684 @@
+---
+title: Authentication and Users
+description: Simplify user authentication in your iOS app with our definitive API guide. Fortify your app's defenses and protect user data effectively.
+head:
+  - tag: title
+    content: iOS Authentication and Users APIs | ConnectyCube
+sidebar:
+  label: Authentication and Users
+  order: 3
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+Every user has to authenticate with ConnectyCube before using any ConnectyCube functionality.
+
+When someone connects with an application using ConnectyCube, the application will need to obtain a session token which provides temporary, secure access to ConnectyCube APIs.
+
+A session token is an opaque string that identifies a user and an application.
+
+## Create session token
+
+As a starting point, the user’s session token needs to be created allowing user any further actions within the app. Pass login/email and password to identify a user:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+
+ConnectyCube().signIn(user: userToLogin, successCallback: {(user) in
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[CYBRequest logInWithUserLogin:@"userLogin" password:@"userPassword" successBlock:^(CYBUser *user) {
+
+ } errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+Request.logIn(withUserLogin: "userLogin", password: "userPassword", successBlock: { (user) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Authentication via phone number
+
+Sign In with phone number is supported with **Firebase integration**.
+
+The whole guide on how to create Firebase project, connect Firebase SDK and implement authentication via phone number is available at our [Firebase Setup Guide](/ios/firebase-setup-guide). Please follow it.
+
+## Authentication via external identity provider
+
+**Custom Identity Provider (CIdP)** feature is necessary if you have your own user database and want to authenticate users in ConnectyCube against it. It works the same way as Facebook/Twitter SSO.
+
+With Custom Identity Provider feature you can continue use your user database instead of storing/copying user data to ConnectyCube database.
+
+### CIdP high level integration flow
+
+To get started with **CIdP** integration, check the [Custom Identity Provider guide](/guides/custom-identity-provider) which describes high level integration flow.
+
+### How to login via CIdP
+
+Once you done with the setup mapping in ConnectyCube Dashboard, it's time to verify the integration.
+To perform CIdP login, the same ConnectyCube [User Login API](/ios/authentication-and-users/#upgrade-session-token-user-login) is used. You just use existing login request params to pass your external user token: 
+
+```swift
+let user: ConnectycubeUser = ConnectycubeUser()
+user.login = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIzNDU2Nzg5LCJuYW1lIjoiSm9zZXBoIn0.OpOSSw7e485LOP5PrzScxHb7SR6sAOMRckfFwi4rp7o"
+
+ConnectyCube().signIn(user: userToLogin, successCallback: {(user) in
+
+}) { (error) in
+
+}
+````
+
+Once the login is successful, ConnectyCube will create an underalying User entity, so then you can use ConnectyCube APIs in a same way as you do with a normal login. With CIdP we do not have/store any user password in ConnectyCube User entity.
+
+Following further integration, you may need to connect to Chat. In a case of CIdP login, you do not have a user password. In such cases you should use ConnectyCube session token as a password for chat connection. [Follow the Connect to Chat with CIdP guide](/ios/messaging/#connect-to-chat-using-custom-authentication-providers).
+
+## Session expiration
+
+Expiration time for session token is 2 hours after the last request to API is made. But you do not need to worry about it - with the automatic session token management it will be renewed automatically with next request to API (only v1 for now).
+
+## Destroy session token
+
+To destroy a session use the following code:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConnectyCube().destroySession(successCallback: {
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[CYBRequest destroySessionWithSuccessBlock:^() {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+Request.destroySession(successBlock: {
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+## User signup
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let user: ConnectycubeUser = ConnectycubeUser()
+user.login = "marvin18"
+user.password = "supersecurepwd"
+user.email = "awesomeman@gmail.com"
+user.fullName = "Marvin Simon"
+user.phone = "47802323143"
+user.website = "https://dozensofdreams.com"
+user.tags = "iphone, apple"
+
+ConnectyCube().signUp(user: user, successCallback: {(user) in
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBUser *user = [CYBUser user];
+user.login = @"marvin18";
+user.password = @"supersecurepwd";
+user.email = @"awesomeman@gmail.com";
+user.fullName = @"Marvin Simon";
+user.phone = @"47802323143";
+user.website = @"https://dozensofdreams.com";
+user.tags = @[@"iphone", @"apple"];
+
+[CYBRequest signUp:user successBlock:^(CYBUser *user) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+let user = User()
+user.login = "marvin18"
+user.password = "supersecurepwd"
+user.email = "awesomeman@gmail.com"
+user.fullName = "Marvin Simon"
+user.phone = "47802323143"
+user.website = "https://dozensofdreams.com"
+user.tags = ["iphone", "apple"]
+
+Request.signUp(user, successBlock: { (user) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+Only login (or email) + password are required. Other fields are optional.
+
+## User profile update
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let user: ConnectycubeUser = ConnectycubeUser()
+user.login = "marvin18"
+user.fullName = "Marvin Simon"
+
+ConnectyCube().updateUser(user: user, successCallback: {(user) in
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBUpdateUserParameters *updateParameters = [CYBUpdateUserParameters new];
+updateParameters.login = @"marvin18";
+updateParameters.fullName = @"Marvin Simon";
+
+[CYBRequest updateCurrentUser:updateParameters successBlock:^(CYBUser *user) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+let updateParameters = UpdateUserParameters()
+updateParameters.login = "marvin18"
+updateParameters.fullName = "Marvin Simon"
+
+Request.updateCurrentUser(updateParameters, successBlock: { (user) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+If you want to change your password, you need to provide 2 parameters: `password` and `oldPassword`. An updated `user` entity will be returned.
+
+## User avatar
+
+You can set a user's avatar. You just need to upload it to the ConnectyCube cloud storage and then connect to the user.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let imageFilePath = ""
+ConnectyCube().uploadFile(filePath: imageFilePath, public: false, successCallback: {(cubeFile) in
+    let customData = ["avatar_uid" : cubeFile.uid]
+     if let theJSONData = try? JSONSerialization.data(withJSONObject: customData, options: .prettyPrinted) {
+         user.customData = String(data: theJSONData, encoding: .utf8)
+     }
+     ConnectyCube().updateUser(user: user, successCallback: {(user) in }) { (error) in }
+            
+}, errorCallback: { (error) in
+
+}, progress: { (progress) in
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+UIImage *image = ...
+NSData *fileData = UIImagePNGRepresentation(image);
+
+ [CYBRequest uploadFileWithData:fileData fileName:@"FileName" contentType:@"image/png" isPublic:false progressBlock:^(float progress) {
+
+    } successBlock:^(CYBBlob *blob) {
+
+        NSDictionary *customData = @{@"avatar_uid" : blob.UID};
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:customData options:NSJSONWritingPrettyPrinted error:nil];
+        NSString *jsonCustomData = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        CYBUpdateUserParameters *parameters = [[CYBUpdateUserParameters alloc] init];
+        parameters.customData = jsonCustomData;
+
+        [CYBRequest updateCurrentUser:parameters successBlock:^(CYBUser *user) {
+
+        } errorBlock:^(NSError *error) {
+
+        }];
+    } errorBlock:^(NSError *error) {
+
+    }];
+````
+
+```swift
+let image = ...
+let data = UIImagePNGRepresentation(image!)
+Request.uploadFile(with: data!, fileName: "FileName", contentType: "image/png", isPublic: false, progressBlock: { (progress) in
+}, successBlock: { (blob) in
+
+    let parameters = UpdateUserParameters()
+    let customData = ["avatar_uid" : blob.uid]
+    if let theJSONData = try? JSONSerialization.data(withJSONObject: customData, options: .prettyPrinted) {
+        parameters.customData = String(data: theJSONData, encoding: .utf8)
+    }
+
+    Request.updateCurrentUser(parameters, successBlock: { (user) in
+
+    }, errorBlock: { (error) in
+
+    })
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+Now, other users can get your avatar:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let user = ...
+if let data = user.customData?.data(using: .utf8) {
+    if let customData = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : String] {
+        let avatarUID = customData["avatar_uid"]
+        let privateAvatarUrl = ConnectycubeFileKt.getPrivateUrlForUID(uid: avatarUID)
+     }
+}
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBUser *user = ...
+NSData *jsonData = [user.customData dataUsingEncoding:NSUTF8StringEncoding];
+NSDictionary *customData = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:nil];
+NSString *avatarUDID = customData[@"avatar_uid"];
+NSString *privateUrl = [CYBBlob privateUrlForFileUID:avatarUDID];
+```
+
+```swift
+let user = ...
+if let data = user.customData?.data(using: .utf8) {
+    if let customData = try? JSONSerialization.jsonObject(with: data, options: []) as! [String : String] {
+        let avatarUID = customData["avatar_uid"]
+        let privateAvatarUrl = Blob.privateUrl(forFileUID: avatarUID)
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Password reset
+
+It's possible to reset a password via email:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConnectyCube().resetPassword(email: "user@mail.com", successCallback: {
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[CYBRequest resetUserPasswordWithEmail:@"user@mail.com"  successBlock:^() {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+Request.resetUserPassword(withEmail: "user@mail.com", successBlock: {
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+If provided email is valid - an email with password reset instruction will be sent to it.
+
+## Retrieve users
+
+### Retrieve users by ID
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let paginator = RequestPagination(page: 0, itemsPerPage: 10)
+let sorter = RequestSorter(fieldName: "created_at", sortType: OrderType.shared.ASC)
+        
+ConnectyCube().getUsersByIds(ids: [21, 22], pagination: paginator, sorter: sorter, successCallback: {(result) in
+    let users = result.items
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBPaginator *paginator = [CYBPaginator limit:10 skip:0];
+[CYBRequest usersWithIDs:@[@"21",@"22"] paginator:paginator successBlock:^(CYBPaginator *paginator, NSArray *users) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+let paginator = Paginator(limit:10, skip: 0)
+Request.users(withIDs: ["21","22"], paginator: paginator, successBlock: { (paginator, users) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Retrieve user by login
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConnectyCube().getUserByLogin(login: "amigo", successCallback: {(user) in
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[CYBRequest userWithLogin:@"amigo" successBlock:^(CYBUser *user) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+Request.user(withLogin: "amigo", successBlock: { (user) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Retrieve user by email
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConnectyCube().getUserByEmail(email: "amigo@mail.com", successCallback: {(user) in
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[CYBRequest userWithEmail:@"amigo@mail.com" successBlock:^(CYBUser *user) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+Request.user(withEmail: "amigo@mail.com", successBlock: { (user) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Retrieve users by full name
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let paginator = RequestPagination(page: 0, itemsPerPage: 10)
+let sorter = RequestSorter(fieldName: "created_at", sortType: OrderType.shared.ASC)
+
+ConnectyCube().getUsersByFullName(fullName: "Marvin", pagination: paginator, sorter: sorter, successCallback: {(result) in
+let users = result.items
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBPaginator *paginator = [CYBPaginator limit:10 skip:0];
+[CYBRequest usersWithFullName:@"Marvin" paginator:paginator successBlock:^(CYBPaginator *paginator, NSArray *users) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+let paginator = Paginator(limit:10, skip: 0)
+Request.users(withFullName: "Marvin", paginator: paginator, successBlock: { (paginator, users) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Retrieve user by phone number
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConnectyCube().getUserByPhoneNumber(phone: "+4427123314", successCallback: {(user) in
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBPaginator *paginator = [CYBPaginator limit:10 skip:0];
+[CYBRequest usersWithPhoneNumbers:@[@"+4427123314"] paginator:paginator successBlock:^(CYBPaginator *paginator, NSArray *users) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+let paginator = Paginator(limit:10, skip: 0)
+Request.users(withPhoneNumbers: ["+4427123314"], paginator: paginator, successBlock: { (paginator, users) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Retrieve user by external ID
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConnectyCube().getUserByExternalId(id: "3789", successCallback: {(user) in
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[CYBRequest userWithExternalID:3789 successBlock:^(CYBUser *user) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+Request.user(withExternalID: 3789, successBlock: { (user) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+### Retrieve users by tags
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let paginator = RequestPagination(page: 0, itemsPerPage: 10)
+let sorter = RequestSorter(fieldName: "created_at", sortType: OrderType.shared.ASC)
+
+ConnectyCube().getUsersByTags(tags: ["iphone"], pagination: paginator, sorter: sorter, successCallback: {(result) in
+let users = result.items
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBPaginator *paginator = [CYBPaginator limit:10 skip:0];
+[CYBRequest usersWithTags:@[@"iphone"] paginator:paginator successBlock:^(CYBPaginator *paginator, NSArray *users) {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+let paginator = Paginator(limit:10, skip: 0)
+Request.users(withTags: ["iphone"], paginator: paginator, successBlock: { (paginator, users) in
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Delete user
+
+A user can delete himself from the platform:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConnectyCube().deleteUser(successCallback: {
+
+}) { (error) in
+
+}
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[CYBRequest deleteCurrentUserWithSuccessBlock:^() {
+
+} errorBlock:^(NSError *error) {
+
+}];
+````
+
+```swift
+Request.deleteCurrentUser(successBlock: {
+
+}) { (error) in
+
+}
+```
+
+</TabItem>
+</Tabs>

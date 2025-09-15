@@ -1,0 +1,229 @@
+---
+title: Make first call
+description: A guide with the essential steps of how to make the first call via ConnectyCube iOS Video SDK - from session creation to initialising and accepting the call.
+head:
+  - tag: title
+    content: Make first call guide | ConnectyCube iOS SDK
+sidebar: 
+    label: Make first call
+    order: 2
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+**ConnectyCube Video Calling Peer-to-Peer (P2P) API** provides a solution for integrating real-time video and audio calling into your application. This API enables you to create smooth one-on-one and group video calls, supporting a wide range of use cases like virtual meetings, telemedicine consultations, social interactions, and more. The P2P approach ensures that media streams are transferred directly between users whenever possible, minimizing latency and delivering high-quality audio and video. 
+
+If you’re planning to build a new app, we recommend starting with one of our [code samples apps](/ios/getting-started/code-samples/) as a foundation for your client app.    
+If you already have an app and you are looking to add chat and voice/video calls to it, proceed with this guide. This guide walks you through installing the ConnectyCube SDK in your app, configure it and then initiating the call to the opponent.
+
+## Before you start
+
+Before you start, make sure:
+1. You have access to ConnectyCube account. If you don’t have an account, [sign up here](https://admin.connectycube.com/register).
+2. An app created in ConnectyCube dashboard. Once logged into [your ConnectyCube account](https://admin.connectycube.com/signin), create a new application and make a note of the app credentials (app ID and auth key) that you’ll need for authentication.
+
+## Step 1: Configure SDK
+
+To use chat in a client app, you should install, import and configure ConnectyCube SDK.
+
+<div style={{
+  fontSize: "0.9em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "10px"
+}}>
+  <strong>Note:</strong> If the app is already created during the onboarding process and you followed all the instructions, you can skip the 'Configure SDK' step and start with <a href="#step-2-create-and-authorise-user">Create and Authorise User</a>.
+</div>
+
+### Install SDK
+
+To connect ConnectyCube to your iOS app just add it into your `Podfile` which is a part of [CocoaPods](https://cocoapods.org/) tool:
+
+```ruby
+platform :ios, '9.0'
+use_frameworks!
+
+target 'MyApp' do
+  pod 'ConnectyCube'
+end
+```
+
+and then install packages from the command line:
+
+```bash
+pod install
+```
+
+### Import SDK
+
+Add the following import statement to start using all classes and methods.
+
+```swift
+import ConnectyCube
+```
+
+### Initialize SDK
+
+Initialize the SDK with your ConnectyCube application credentials. You can access your application credentials in [ConnectyCube Dashboard](https://admin.connectycube.com):
+
+```swift
+ConnectyCube().doInit(applicationId: APP_ID, authorizationKey: AUTH_KEY, connectycubeConfig: nil)
+```
+
+## Step 2: Create and Authorise User
+
+As a starting point, the user's session token needs to be created allowing to participate in calls.    
+With the request below, the user is created automatically on the fly upon session creation using the login (or email) and password from the parameters:
+
+```swift
+let user: ConnectycubeUser = ConnectycubeUser()
+user.login = "marvin18"
+user.password = "supersecurepwd"
+
+ConnectyCube().createSession(user: user, successCallback: {(session) in
+
+}) { (error) in
+
+}
+```
+
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> such approach with the automatic user creation works well for testing purposes and while the application isn’t launched on production. For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+## Step 3: Connect User to chat
+
+Connecting to the chat is an essential step in enabling real-time communication.
+
+To start using Video Calling API you need to connect user to Chat as [ConnectyCube Chat API](/ios/messaging) is used as a signalling transport for Video Calling API:
+
+```swift
+let user = ConnectycubeUser()
+user.id = 2746
+user.password = "supersecurepwd"
+
+ConnectyCube().chat.login(user: user, successCallback:{
+
+}, errorCallback: { error in
+
+}, resource: ConnectycubeSettings().chatDefaultResource)
+
+```
+
+
+## Step 4: P2P calls initialization
+
+Before any interaction with ConnectyCubeCalls you need to initialize it:
+
+
+```swift
+ConnectyCube().p2pCalls.register()
+```
+
+
+## Step 5: Initiate call
+
+`Initiate Call` function sets up the foundational connection between the caller and the selected opponents:
+
+```swift
+let opponentsIds = [3245, 2123, 3122].map{KotlinInt(value: $0)}
+let newSession = ConnectyCube().p2pCalls.createSession(userIds: opponentsIds, callType: CallType.video)
+// userInfo - the custom user information dictionary for the call. May be nil.
+let userInfo = ["key":"value"] as? KotlinMutableDictionary<NSString, NSString> // optional
+newSession.startCall(userInfo: userInfo)
+```
+
+
+After this your opponents will receive one call request per 5 second for a duration of 45 seconds (you can configure these settings with `WebRTCConfig`:
+
+```swift
+//MARK: RTCCallSessionCallback
+ConnectyCube().p2pCalls.addSessionCallbacksListener(callback: self)
+
+extension YourClass: RTCCallSessionCallback {
+    func onReceiveNewSession(session: P2PSession) {
+        if self.session != nil {
+            // we already have a video/audio call session, so we reject another one
+            // userInfo - the custom user information dictionary for the call from caller. May be nil.
+            let userInfo = ["key":"value"] as? KotlinMutableDictionary<NSString, NSString> // optional
+            session.rejectCall(userInfo: userInfo)
+            return
+        }
+        // saving session instance here
+        self.session = session
+    }
+...  
+}
+
+```
+
+`self.session` refers to the current session. Each particular audio - video call has a unique `sessionID`. This allows you to have more than one independent audio-video conferences.
+If you want to increase the call timeout, e.g. set to 60 seconds:
+
+
+```swift
+WebRTCConfig().answerTimeInterval = 60
+```
+
+
+> Default value is 60 seconds.
+
+In case opponent did not respond to your call within a specific timeout time, the callback listed below will be called:
+
+
+```swift
+//MARK: RTCCallSessionCallback
+ConnectyCube().p2pCalls.addSessionCallbacksListener(callback: self)
+
+func onUserNotAnswer(session: P2PSession, opponentId: Int32) {
+
+}
+
+```
+
+
+## Step 6: Accept a call
+
+In order to accept a call, use the `P2PSession` method below:
+
+```swift
+// userInfo - the custom user information dictionary for the accept call. May be nil.
+let userInfo: KotlinMutableDictionary<NSString, NSString> = ["key":"value"] // optional
+self.session?.acceptCall(userInfo: userInfo)
+```
+
+
+After this you will receive an **accept** signal:
+
+
+```swift
+//MARK: RTCCallSessionCallback
+ConnectyCube().p2pCalls.addSessionCallbacksListener(callback: self)
+
+func onCallAcceptByUser(session: P2PSession, opponentId: Int32, userInfo: [String : Any]?) {
+
+}
+
+```
+
+
+Great work! You've completed the essentials of making a call in ConnectyCube. From this point, you and your opponents should start seeing and hearing each other.
+
+#### What's next? 
+
+To enhance your calling feature with advanced functionalities, such as call recording, screen sharing, or integrating emojis and attachments during calls, follow the API guides below. These additions will help create a more dynamic and engaging experience for your users!
+* [Voice/video calling SDK documentation](/ios/videocalling)
+* [Conference calling SDK documentation](/ios/videocalling-conference)

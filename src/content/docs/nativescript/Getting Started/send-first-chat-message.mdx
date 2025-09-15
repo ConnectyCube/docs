@@ -1,0 +1,193 @@
+---
+title: Send first chat message
+description: Step-by-step guide to sending your first chat message using ConnectyCube NativeScript Chat SDK - what exactly to do when you want to build a chat.
+head:
+  - tag: title
+    content: Send first chat message guide | ConnectyCube NativeScript SDK
+sidebar: 
+    label: Send first chat message
+    order: 1
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+
+The **ConnectyCube Chat API** is a set of tools that enables developers to integrate real-time messaging into their web and mobile applications. With this API, users can build powerful chat functionalities that support one-on-one messaging, group chats, typing indicators, message history, delivery receipts, and push notifications.
+
+If you’re planning to build a new app, we recommend starting with one of our [code samples apps](/nativescript/getting-started/code-samples/) as a foundation for your client app.    
+If you already have an app and you are looking to add a chat to it, proceed with this guide. This guide walks you through installing the ConnectyCube SDK in your app, configure it and then sending your first message to the opponent in 1-1 chat.
+
+## Before you start
+
+Before you start, make sure:
+1. You have access to your ConnectyCube account. If you don’t have an account, [sign up here](https://admin.connectycube.com/register).
+2. An app created in ConnectyCube dashboard. Once logged into [your ConnectyCube account](https://admin.connectycube.com), create a new application and make a note of the app credentials (app ID and auth key) that you’ll need for authentication.
+
+## Step 1: Configure SDK
+
+To use chat in a client app, you should install, import and configure ConnectyCube SDK.
+
+<div style={{
+  fontSize: "0.9em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "10px"
+}}>
+  <strong>Note:</strong> If the app is already created during the onboarding process and you followed all the instructions, you can skip the 'Configure SDK' step and start with <a href="#step-2-create-and-authorise-user">Create and Authorise User</a>.
+</div>
+
+### Install SDK
+
+Install package from the command line:
+
+<Tabs syncKey="installSDK">
+<TabItem label='npm'>
+```bash
+npm install nativescript-connectycube --save
+```
+</TabItem>
+<TabItem label='yarn'>
+```bash
+yarn add nativescript-connectycube
+```
+</TabItem>
+</Tabs>
+
+### Import SDK
+
+Add the following import statement to start using all classes and methods.
+
+```javascript
+import ConnectyCube from 'nativescript-connectycube';
+```
+
+### Initialize SDK
+
+Initialize the SDK with your ConnectyCube application credentials. You can access your application credentials in [ConnectyCube Dashboard](https://admin.connectycube.com):
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v4'>
+```javascript
+const CREDENTIALS = {
+  appId: 21,
+  authKey: 'hhf87hfushuiwef',
+};
+
+ConnectyCube.init(CREDENTIALS);
+```
+</TabItem>
+
+<TabItem label='SDK v3'>
+```javascript
+const CREDENTIALS = {
+  appId: 21,
+  authKey: 'hhf87hfushuiwef',
+  authSecret: 'jjsdf898hfsdfk',
+};
+
+ConnectyCube.init(CREDENTIALS);
+```
+</TabItem>
+</Tabs>
+
+## Step 2: Create and Authorise User
+
+As a starting point, the user's session token needs to be created allowing to send and receive messages in chat.    
+
+```javascript
+const userCredentials = { login: "marvin18", password: "supersecurepwd" };
+// const userCredentials = { email: 'cubeuser@gmail.com', password: 'awesomepwd' };
+// const userCredentials = { provider: 'facebook', keys: {token: 'a876as7db...asg34dasd8wqe'} };
+
+ConnectyCube.createSession(userCredentials)
+  .then((user) => {})
+  .catch((error) => {});
+```
+
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> such approach with the automatic user creation works well for testing purposes and while the application isn’t launched on production. For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+## Step 3: Connect User to chat
+
+Connecting to the chat is an essential step in enabling real-time communication. By establishing a connection, the user is authenticated on the chat server, allowing them to send and receive messages instantly. Without this connection, the app won't be able to interact with other users in the chat.
+
+```javascript
+const userCredentials = {
+  userId: 4448514,
+  password: "supersecurepwd",
+};
+
+ConnectyCube.chat
+  .connect(userCredentials)
+  .then(() => {
+    // connected
+  })
+  .catch((error) => {});
+```
+
+## Step 4: Create 1-1 chat
+
+Creating a 1-1 chat is essential because it gives a unique conversation ID to correctly route and organize your message to the intended user.
+
+You need to pass `type: 3` (1-1 chat) and an id of an opponent you want to create a chat with:
+
+```javascript
+const params = {
+  type: 3,
+  occupants_ids: [56],
+};
+
+ConnectyCube.chat.dialog
+  .create(params)
+  .then((dialog) => {})
+  .catch((error) => {});
+```
+
+## Step 5: Send / Receive chat messages
+
+Once the 1-1 chat is set up, you can use it to exchange messages seamlessly. The code below demonstrates how to send and receive messages within a specific 1-1 chat.
+
+```javascript
+const dialog = ...;
+const opponentId = 56;
+const message = {
+  type: dialog.type === 3 ? 'chat' : 'groupchat',
+  body: "How are you today?",
+  extension: {
+    save_to_history: 1,
+    dialog_id: dialog._id
+  }
+};
+
+message.id = ConnectyCube.chat.send(opponentId, message);
+
+// ...
+
+ConnectyCube.chat.onMessageListener = onMessage;
+
+function onMessage(userId, message) {
+    console.log('[ConnectyCube.chat.onMessageListener] callback:', userId, message)
+}
+```
+
+Congratulations! You’ve mastered the basics of sending a chat message in ConnectyCube.
+
+#### What’s next?
+
+To take your chat experience to the next level, explore ConnectyCube advanced functionalities, like adding typing indicators, using emojis, sending attachments, and more.
+
+Follow the [Chat SDK documentation](/nativescript/messaging) to enrich your app and engage your users even further!

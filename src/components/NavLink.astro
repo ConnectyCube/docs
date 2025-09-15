@@ -1,0 +1,127 @@
+---
+import HeroiconsSolidArrowRight from '~icons/heroicons-solid/arrow-right';
+
+const {
+	href,
+	title,
+	target = '_self',
+	color = 'accent',
+	size = 'regular',
+	isIcon = false,
+} = Astro.props;
+---
+
+<a href={href} target={target} class:list={[color, size]}>
+	<span>{title}</span>
+	{isIcon && <HeroiconsSolidArrowRight class="arrow-right" aria-hidden />}
+</a>
+
+<style>
+	a {
+		display: flex;
+		align-items: flex-end;
+		margin: 0px;
+		font-style: normal;
+		line-height: 1.4em;
+		text-decoration-line: underline;
+		text-decoration-style: solid;
+		text-decoration-thickness: auto;
+		text-underline-offset: auto;
+		text-decoration-skip-ink: auto;
+		text-underline-position: from-font;
+	}
+
+	.accent > span {
+		white-space: nowrap;
+	}
+
+	.accent {
+		color: var(--sl-color-accent);
+	}
+
+	.accent:hover {
+		color: #2fabc3;
+	}
+
+	.common {
+		color: var(--sl-home-page-overview-card-link-color);
+	}
+
+	.common:hover {
+		color: var(--sl-card-link-hover);
+	}
+
+	.regular {
+		font-family: 'RadikalTrial-Regular', system-ui;
+		font-size: 18px;
+		font-weight: 400;
+	}
+
+	.medium {
+		font-family: 'RadikalTrial-Medium', system-ui;
+		font-size: 18px;
+		font-weight: 500;
+	}
+
+	.bold {
+		font-family: 'RadikalTrial-Bold', system-ui;
+		font-size: 16px;
+		font-weight: 700;
+	}
+
+	.arrow-right {
+		width: 24px;
+		height: 24px;
+		min-width: 10px;
+		min-height: 10px;
+		margin-left: 12px;
+		overflow: hidden;
+		color: var(--sl-color-accent);
+	}
+
+	@media screen and (max-width: 1024px) {
+		.regular {
+			font-size: 17px;
+		}
+		.medium {
+			font-size: 17px;
+		}
+		.arrow-right {
+			margin-left: 6px;
+		}
+	}
+
+	@media screen and (max-width: 768px) {
+		.regular {
+			font-size: 16px;
+		}
+		.medium {
+			font-size: 16px;
+		}
+		.bold {
+			font-size: 15px;
+		}
+		.arrow-right {
+			width: 20px;
+			height: 20px;
+			margin-left: 8px;
+		}
+	}
+
+	@media screen and (max-width: 380px) {
+		.regular {
+			font-size: 15px;
+		}
+		.medium {
+			font-size: 15px;
+		}
+		.bold {
+			font-size: 14px;
+		}
+		.arrow-right {
+			width: 18px;
+			height: 18px;
+			margin-left: 5px;
+		}
+	}
+</style>

@@ -1,0 +1,75 @@
+---
+import HomeBottomSectionImg from '../assets/home/home-img2.svg';
+import NavLinkCard from './NavLinkCard.astro';
+
+const navLinkCards = [
+    {
+        title: "Build a Flutter Chat app in 1 hour with ConnectyCube SDK",
+        href: "https://connectycube.com/2024/05/14/build-a-flutter-chat-app-in-1-hour-with-connectycube-sdk/?cat=all",
+        target: "_blank",
+    },
+    {
+        title: "External authentication via Custom Identity Provider (CIdP)",
+        href: "/guides/custom-identity-provider/",
+    },
+]
+---
+
+<div class="not-content">
+    <div class="home-bottom-section">
+        <div class="home-bottom-section-half p-1">
+            <img src={HomeBottomSectionImg.src} alt="Home Image" width="100%" height="auto" />
+        </div>
+        <div class="home-bottom-section-half">
+            <div class="link-card-wrapper">
+                {navLinkCards.map(({title, href, target}) => <NavLinkCard title={title} href={href} target={target} />)}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.home-bottom-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px 16px;
+}
+
+.home-bottom-section-half {
+    width: 50%;
+    height: auto;
+}
+
+.p-1 {
+    padding: 0 85px 0 0;
+}
+
+.home-bottom-section > img {
+    max-width: 40%;
+    height: auto;
+} 
+
+.link-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+@media screen and (max-width: 768px) {
+    .home-bottom-section {
+        flex-direction: column;
+    }
+
+    .home-bottom-section > img {
+        max-width: 70%;
+    } 
+    .p-1 {
+        padding: 0 2rem 0 2rem;
+    }
+    .home-bottom-section-half {
+        width: 100%;
+        height: auto;
+    }
+}
+</style>

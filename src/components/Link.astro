@@ -1,0 +1,73 @@
+---
+const { href, title, target = '_self', isForked = false } = Astro.props;
+const forkedLinkStyle = isForked && 'forked-link';
+---
+
+<a href={href} class:list={['link', forkedLinkStyle]} target={target}>{title}</a
+>
+
+<style>
+	.link {
+		padding: 20px 28px;
+		border-top: 1px solid var(--sl-card-divider-color);
+		font-family: 'RadikalTrial-Regular', system-ui;
+		font-size: 18px;
+		font-weight: 400;
+		font-style: normal;
+		line-height: 1.5em;
+		color: var(--sl-home-page-text-color);
+		text-decoration: none;
+	}
+
+	.forked-link {
+		padding: 0px;
+		font-weight: 600;
+		border-top: unset;
+	}
+
+	.link:hover {
+		color: var(--sl-card-link-hover);
+	}
+
+	.link:first-of-type {
+		border-top: none;
+	}
+
+	@media screen and (max-width: 1024px) {
+		.link {
+			font-size: 17px;
+			padding: 18px 24px;
+		}
+
+		.forked-link {
+			padding: 0px;
+			font-weight: 600;
+			border-top: unset;
+		}
+	}
+
+	@media screen and (max-width: 768px) {
+		.link {
+			padding: 12px 22px;
+			font-size: 16px;
+		}
+
+		.forked-link {
+			padding: 0px;
+			font-weight: 600;
+			border-top: unset;
+		}
+	}
+	@media screen and (max-width: 380px) {
+		.link {
+			padding: 10px 22px;
+			font-size: 15px;
+		}
+
+		.forked-link {
+			padding: 0px;
+			font-weight: 600;
+			border-top: unset;
+		}
+	}
+</style>

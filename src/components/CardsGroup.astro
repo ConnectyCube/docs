@@ -1,0 +1,75 @@
+---
+import Card from './Card.astro';
+import Title from './Title.astro';
+import type { CardType } from '../data/types';
+
+const { className, data, title, subtitle, anchor } = Astro.props;
+---
+
+<div class="not-content">
+	<div class="section">
+		<Title title={title} subtitle={subtitle} anchor={anchor} />
+		<div id="cards" class:list={['not-content', className]}>
+			{
+				data.map(({ title, icon, links }: CardType) => (
+					<Card title={title} icon={icon} links={links} />
+				))
+			}
+		</div>
+	</div>
+</div>
+
+<style>
+	.section {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-block: 38px 56px;
+	}
+
+	.cards-primary {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		grid-template-rows: repeat(2, 1fr);
+		-ms-grid-columns: repeat(5, 1fr);
+		-ms-grid-rows: repeat(2, 1fr);
+		column-gap: 16px;
+		row-gap: 24px;
+	}
+
+	.cards-secondary {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		column-gap: 16px;
+		row-gap: 24px;
+	}
+
+	#cards {
+		width: 100%;
+		margin-top: 16px;
+	}
+
+	@media screen and (max-width: 1024px) {
+		.cards-primary {
+			column-gap: 8px;
+			row-gap: 16px;
+		}
+	}
+
+	@media screen and (max-width: 768px) {
+		.section {
+			margin-block: 32px 56px;
+		}
+		.cards-secondary {
+			grid-template-columns: none;
+		}
+		.cards-primary {
+			grid-template-columns: repeat(2, 1fr);
+			grid-template-rows: repeat(4, 1fr);
+			column-gap: 8px;
+			row-gap: 12px;
+			-ms-grid-columns: repeat(2, 1fr);
+			-ms-grid-rows: repeat(4, 1fr);
+		}
+	}
+</style>

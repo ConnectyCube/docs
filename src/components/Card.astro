@@ -1,0 +1,196 @@
+---
+import Link from './Link.astro';
+import type { LinkType } from '../data/types';
+
+interface Props {
+	title: string;
+	icon: string;
+	links: Array<LinkType>;
+}
+
+const { title, icon, links } = Astro.props;
+---
+
+<div class="card">
+	<div class="title-container">
+		<span class={icon}></span>
+		<h3>{title}</h3>
+	</div>
+	{
+		links.map(({ href, title, target, forked }: LinkType) => {
+			if (forked) {
+				return (
+					<div class="forked-link-container">
+						<a class="forked-link-text">
+							{title}&nbsp;
+							{forked.map(({ title, href, target }, index) => {
+								const isLast = forked.length - 1 === index;
+								return (
+									<span class="forked-link-text">
+										<Link href={href} title={title} target={target} isForked />
+										{!isLast && (
+											<span class="forked-link-text">&nbsp;and&nbsp;</span>
+										)}
+									</span>
+								);
+							})}
+						</a>
+					</div>
+				);
+			} else {
+				return <Link href={href} title={title} target={target} />;
+			}
+		})
+	}
+</div>
+
+<style>
+	.card {
+		display: flex;
+		flex-direction: column;
+		border-radius: 8px;
+		box-shadow: 0px 2px 8px 0px var(--sl-card-shadow);
+		background-color: var(--sl-card-bg-color);
+		overflow: hidden;
+	}
+
+	.forked-link-container {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-start;
+		flex-wrap: wrap;
+		padding: 20px 28px;
+		border-bottom: 1px solid var(--sl-card-divider-color);
+	}
+
+	.forked-link-text {
+		font-family: 'RadikalTrial-Regular', system-ui;
+		font-size: 18px;
+		font-weight: 400;
+		font-style: normal;
+		line-height: 1.5em;
+		color: var(--sl-home-page-text-color);
+	}
+
+	.title-container {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-start;
+		padding: 16px 24px;
+		background-color: var(--sl-card-title-bg-color);
+	}
+	.title-container > span {
+		display: block;
+		height: 40px;
+		width: 40px;
+		margin-right: 8px;
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: contain;
+	}
+	.title-container > h3 {
+		text-align: left;
+		font-family: 'RadikalTrial-Medium', system-ui;
+		font-size: 20px;
+		font-weight: 500;
+		font-style: normal;
+		line-height: 1.4em;
+		color: var(--sl-color-white);
+	}
+	.title-container > span.icon-flutter {
+		background-image: url('../assets/home/flutter.svg');
+	}
+	.title-container > span.icon-react-native {
+		background-image: url('../assets/home/react-native.svg');
+	}
+	.title-container > span.icon-javascript {
+		background-image: url('../assets/home/javascript.svg');
+	}
+	.title-container > span.icon-cordova {
+		background-image: url('../assets/home/cordova.svg');
+	}
+	.title-container > span.icon-native-script {
+		background-image: url('../assets/home/native-script.svg');
+	}
+	.title-container > span.icon-ios {
+		background-image: url('../assets/home/ios.svg');
+	}
+	.title-container > span.icon-android {
+		background-image: url('../assets/home/android.svg');
+	}
+	.title-container > span.icon-server {
+		background-image: url('../assets/home/server.svg');
+	}
+	.title-container > span.security-complience {
+		background-image: url('../assets/home/security-complience.svg');
+	}
+	.title-container > span.ai {
+		background-image: url('../assets/home/ai.svg');
+	}
+	.title-container > span.firebase {
+		background-image: url('../assets/home/firebase.svg');
+	}
+	.title-container > span.apns {
+		background-image: url('../assets/home/apns.svg');
+	}
+
+	@media screen and (max-width: 1024px) {
+		.forked-link-container {
+			padding: 18px 24px;
+		}
+		.forked-link-text {
+			font-size: 17px;
+		}
+		.title-container {
+			padding: 12px 16px;
+		}
+		.title-container > h3 {
+			font-size: 18px;
+		}
+		.title-container > span {
+			height: 32px;
+			width: 32px;
+			margin-right: 7px;
+		}
+	}
+	@media screen and (max-width: 768px) {
+		.forked-link-container {
+			padding: 12px 22px;
+		}
+		.forked-link-text {
+			font-size: 16px;
+		}
+		.title-container {
+			padding: 10px 14px;
+		}
+		.title-container > h3 {
+			font-size: 17px;
+		}
+		.title-container > span {
+			height: 24px;
+			width: 24px;
+			margin-right: 6px;
+		}
+	}
+	@media screen and (max-width: 380px) {
+		.forked-link-container {
+			padding: 10px 22px;
+		}
+		.forked-link-text {
+			font-size: 15px;
+		}
+		.title-container {
+			padding: 8px 12px;
+		}
+		.title-container > h3 {
+			font-size: 16px;
+		}
+		.title-container > span {
+			height: 20px;
+			width: 20px;
+			margin-right: 5px;
+		}
+	}
+</style>

@@ -1,0 +1,16 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:mdx/recommended"
+  ],
+  "plugins": [
+    "mdx"
+  ],
+  "overrides": [
+    {
+      "files": ["*.mdx"],
+      "extends": ["plugin:mdx/recommended"]
+    }
+  ]
+}
+

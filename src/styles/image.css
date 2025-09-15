@@ -1,0 +1,28 @@
+.img-container {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: center;
+}
+
+.img-wrapper {
+	margin: 8px; 
+	margin-top: 1rem;
+	border: 1px solid #ccc;
+}
+
+.align-center {
+	display: flex;
+	justify-content: center;
+}
+
+.img-mobile-sample {
+	width: 200px;
+	height: auto;
+}
+
+@media (min-width: 50rem) {
+	.img-container {
+		justify-content: space-evenly;
+	}
+}

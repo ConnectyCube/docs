@@ -1,0 +1,64 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
+import SocialIcons from './SocialIcons.astro';
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+---
+
+<div class="mobile-preferences sl-flex">
+    <div class="container gap-1 margin-1">
+        <a href="https://connectycube.com">Home</a>
+        <a href="https://connectycube.com/features/">Features</a>
+        <a href="https://connectycube.com/pricing/">Pricing</a>
+        <a href="https://connectycube.com/contact/">Contact</a>
+    </div>
+    <div class="container">
+        <div class="sl-flex social-icons">
+            <SocialIcons {...Astro.props} />
+        </div>
+        <ThemeSelect {...Astro.props} />
+        <LanguageSelect {...Astro.props} />
+    </div>
+</div>
+
+<style>
+    .container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    
+    .gap-1 {
+        gap: 2rem;
+    }
+    
+    .margin-1 {
+        margin: 0.5rem;
+    }
+
+    a {
+		color: inherit;
+		text-decoration: inherit;
+	}
+
+	.social-icons {
+		margin-inline-end: auto;
+		gap: 1rem;
+		align-items: center;
+		padding-block: 1rem;
+	}
+
+	.social-icons:empty {
+		display: none;
+	}
+
+	.mobile-preferences {
+		justify-content: space-between;
+		flex-wrap: wrap;
+		border-top: 1px solid var(--sl-color-gray-6);
+		column-gap: 1rem;
+		padding: 0.5rem 0;
+	}
+</style>

@@ -1,0 +1,629 @@
+---
+title: Video Conferencing
+description: Discover the simplicity of integrating conference video calling into your Android app with our easy-to-use API. Empower users to connect from anywhere.
+head:
+  - tag: title
+    content: Android Multiparty Video Conferencing API | ConnectyCube
+sidebar:
+  label: Conference Video calling
+  order: 6
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+ConnectyCube **Multiparty Video Conferencing API** is built on top of [WebRTC](https://webrtc.org/) protocol and based on top of [WebRTC SFU](https://webrtcglossary.com/sfu/) architecture.
+
+Max people per Conference call is 12.
+
+Video Conferencing is available starting from [Advanced plan](https://connectycube.com/pricing/).
+
+> To get a difference between **P2P calling** and **Conference calling** please read our [ConnectyCube Calling API comparison](https://connectycube.com/2020/04/15/connectycube-calling-api-comparison/) blog page.
+
+## Features supported
+
+- Video/Audio Conference with up to 12 people
+- Join-Rejoin video room functionality (like Skype)
+- Guest rooms
+- Mute/Unmute audio/video streams
+- Display bitrate
+- Switch video input device (camera)
+
+## Connect SDK
+
+For using Video Conferencing feature you should add a dependency (only for V1):
+
+#### SDK v1 kotlin (deprecated)
+
+```groovy
+implementation "com.connectycube:connectycube-android-sdk-videochat-conference:$sdkVersion"
+```
+
+## Create meeting
+
+In order to have a conference call, a meeting object has to be created.
+
+```kotlin
+val now = System.currentTimeMillis() / 1000
+
+val meeting = ConnectycubeMeeting(
+    name = "My meeting",
+    startDate = now,
+    endDate = now + 60 * 60,
+    attendees = listOf(ConnectycubeAttendee(123, "superman@mail.com"), ConnectycubeAttendee(124, "superman2@mail.com")),
+    chat = false,
+    record = false,
+    public = true,
+    scheduled = false,
+    // notify = true, //notify feature is available starting from the [Advanced plan](https://connectycube.com/pricing/)
+    // notifyBefore = ConnectycubeNotifyBefore(ConnectycubeMeetingMetric.HOURS, 1) //notify feature is available starting from the [Advanced plan](https://connectycube.com/pricing/)
+)
+
+createMeeting(meeting, { createdMeeting ->
+    val confRoomId = createdMeeting.id
+}, { error ->
+
+})
+```
+
+- `name` - the meeting name.
+- As for `attendees` - either ConnectyCube users ids or external emails can be provided.
+- `start_date` - the date when meeting starts.
+- `end_date` - the date when meeting ends.
+- Pass `withChat = true` if you want to have a chat connected to meeting.
+- Pass `record = true` if you want to have a meeting call recorded. Read more about Recording feature https://connectycube.com/2021/02/23/connectycube-releases-server-side-calls-recording-along-with-new-meetings-api/
+
+Once meeting is created, you can use `meeting.id` as a conf room identifier in the below requests when join a call.
+
+## ConferenceSession
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+// Create session with Video or Audio type conference
+val conferenceType = CallType.VIDEO
+
+ConnectyCube.conferenceCalls.createSession(userId, conferenceType, object:
+ConferenceCallback<ConferenceSession> {
+override fun onSuccess(result: ConferenceSession) {
+
+    }
+
+    override fun onError(ex: WsException) {
+
+    }
+
+
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val client: ConferenceClient = ConferenceClient.getInstance(applicationContext)
+
+// Create session with Video or Audio type conference
+val conferenceType = ConferenceType.CONFERENCE_TYPE_VIDEO
+
+client.createSession(userId, conferenceType, object : ConferenceEntityCallback<ConferenceSession> {
+    override fun onSuccess(session: ConferenceSession?) {
+
+    }
+
+    override fun onError(exception: WsException?) {
+
+    }
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceClient client = ConferenceClient.getInstance(getApplicationContext());
+
+// Create session with Video or Audio type conference
+RTCTypes.ConferenceType conferenceType = RTCTypes.ConferenceType.CONFERENCE_TYPE_VIDEO;
+
+client.createSession(userID, conferenceType, new ConferenceEntityCallback() {
+@Override
+public void onSuccess(ConferenceSession session) {
+
+    }
+
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+`ConferenceClient` (`ConferenceCalls` v2) instance is a client model responsible for managing conference session.
+
+`ConferenceClient` has a `setAutoSubscribeAfterJoin` (`autoSubscribeAfterJoin` v2) option, which means your client will be subscribing to all online publishers after join to some room.
+
+`ConferenceSession` is a session within certain video room, managing all current processes.
+
+## Events
+
+In order to have an ability to receive callbacks about current `ConferenceSession` instance state and conference events, you should implement appropriate interfaces:
+
+Implement `RTCSessionStateCallback` for tracking connection stat:
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val sessionStateCallback = object: RTCSessionStateCallback<ConferenceSession> {
+    /**
+     * Called when session state is changed
+     */
+    override fun onStateChanged(session: ConferenceSession, state: BaseSession.RTCSessionState) {}
+
+    /**
+     * Called in case when opponent disconnected
+     */
+    override fun onDisconnectedFromUser(session: ConferenceSession, userId: Int) {}
+
+    /**
+     * Called in case when connection with opponent is established
+     */
+    override fun onConnectedToUser(session: ConferenceSession, userId: Int) {}
+
+    /**
+     * Called in case when connection closed with certain user.
+     */
+    override fun onConnectionClosedForUser(session: ConferenceSession, userId: Int) {}
+}
+
+  currentSession.addSessionStateCallbacksListener(sessionStateCallback)
+//currentSession.removeSessionStateCallbacksListener(sessionStateCallback)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val sessionStateCallback = object: RTCSessionStateCallback<ConferenceSession> {
+    /**
+     * Called when session state is changed
+     */
+    override fun onStateChanged(session: ConferenceSession, state: BaseSession.RTCSessionState) {}
+
+    /**
+     * Called in case when opponent disconnected
+     */
+    override fun onDisconnectedFromUser(session: ConferenceSession, userID: Int) {}
+
+    /**
+     * Called in case when connection with opponent is established
+     */
+    override fun onConnectedToUser(session: ConferenceSession, userID: Int) {}
+
+    /**
+     * Called in case when connection closed with certain user.
+     */
+    override fun onConnectionClosedForUser(session: ConferenceSession, userID: Int) {}
+
+}
+
+currentSession.addSessionCallbacksListener(sessionStateCallback)
+//currentSession.removeSessionCallbacksListener(sessionStateCallback)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+RTCSessionStateCallback sessionStateCallback = new RTCSessionStateCallback<ConferenceSession>(){
+    /**
+    * Called when session state is changed
+    */
+    void onStateChanged(ConferenceSession session, BaseSession.RTCSessionState state);
+
+    /**
+    * Called in case when connection with opponent is established
+    */
+    void onConnectedToUser(ConferenceSession session, Integer userID);
+
+    /**
+    * Called in case when opponent disconnected
+    */
+    void onDisconnectedFromUser(ConferenceSession session, Integer userID);
+
+    /**
+    * Called in case when connection closed with certain user.
+    */
+    void onConnectionClosedForUser(ConferenceSession session, Integer userID);
+}
+
+  currentSession.addSessionCallbacksListener(sessionStateCallback);
+//currentSession.removeSessionCallbacksListener(sessionStateCallback);
+````
+
+</TabItem>
+</Tabs>
+
+Implement `ConferenceSessionCallbacks` for tracking conference events:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val conferenceSessionCallbacks: ConferenceSessionCallbacks<ConferenceSession> = object : ConferenceSessionCallbacks<ConferenceSession> {
+    /**
+     * Called when some publisher (user) joined to the video room
+     */
+    override fun onPublishersReceived(publishers: List<Int>?) {}
+
+    /**
+     * Called when some publisher left room
+     */
+    override fun onPublisherLeft(userId: Int?) {}
+
+    /**
+     * Called when media - audio or video type,  is received
+     */
+    override fun onMediaReceived(type: String?,
+                                 success: Boolean
+    ) {}
+
+    /**
+     * Called when slowLink is received. SlowLink with uplink=true means you notified several missing packets from server, while uplink=false means server is not receiving all your packets.
+     */
+    override fun onSlowLinkReceived(uplink: Boolean, lost: Int) {}
+
+    /**
+     * Called when received errors from server
+     */
+    override fun onError(ex: WsException?) {}
+
+    /**
+     * Called when ConferenceSession is closed
+     */
+    override fun onSessionClosed(session: ConferenceSession) {}
+
+}
+
+currentSession.addConferenceSessionListener(conferenceSessionCallbacks)
+//currentSession.removeConferenceSessionListener(conferenceSessionCallbacks)
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val conferenceSessionCallbacks: ConferenceSessionCallbacks<ConferenceSession> = object : ConferenceSessionCallbacks<ConferenceSession> {
+    /**
+     * Called when some publisher (user) joined to the video room
+     */
+    override fun onPublishersReceived(arrayList: ArrayList<Int>) {}
+
+    /**
+     * Called when some publisher left room
+     */
+    override fun onPublisherLeft(integer: Int) {}
+
+    /**
+     * Called when media - audio or video type,  is received
+     */
+    override fun onMediaReceived(type: String,
+                                 success: Boolean
+    ) {}
+
+    /**
+     * Called when slowLink is received. SlowLink with uplink=true means you notified several missing packets from server, while uplink=false means server is not receiving all your packets.
+     */
+    override fun onSlowLinkReceived(b: Boolean, i: Int) {}
+
+    /**
+     * Called when received errors from server
+     */
+    override fun onError(e: WsException) {}
+
+    /**
+     * Called when ConferenceSession is closed
+     */
+    override fun onSessionClosed(conferenceSession: ConferenceSession) {}
+}
+
+  currentSession.addConferenceSessionListener(conferenceSessionCallbacks)
+//currentSession.removeConferenceSessionListener(conferenceSessionCallbacks)
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceSessionCallbacks<ConferenceSession> conferenceSessionCallbacks = new ConferenceSessionCallbacks<ConferenceSession>() {
+
+    /**
+     * Called when some publisher (user) joined to the video room
+     */
+    @Override
+    public void onPublishersReceived(ArrayList<Integer> arrayList) {
+
+    }
+
+    /**
+     * Called when some publisher left room
+     */
+    @Override
+    public void onPublisherLeft(Integer integer) {
+
+    }
+
+    /**
+     * Called when media - audio or video type,  is received
+     */
+    @Override
+    public void onMediaReceived(String type, boolean success) {
+
+    }
+
+    /**
+     * Called when slowLink is received. SlowLink with uplink=true means you notified several missing packets from server, while uplink=false means server is not receiving all your packets.
+     */
+    @Override
+    public void onSlowLinkReceived(boolean b, int i) {
+
+    }
+
+    /**
+     * Called when received errors from server
+     */
+    @Override
+    public void onError(WsException e) {
+
+    }
+
+    /**
+     * Called when ConferenceSession is closed
+     */
+    @Override
+    public void onSessionClosed(ConferenceSession conferenceSession) {
+
+    }
+
+};
+
+currentSession.addConferenceSessionListener(conferenceSessionCallbacks);
+//currentSession.removeConferenceSessionListener(conferenceSessionCallbacks);
+
+````
+
+</TabItem>
+</Tabs>
+
+## Video and Audio tracks
+For obtaining video and audio tracks implement interface
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+VideoTracksCallback<ConferenceSession>
+AudioTracksCallback<ConferenceSession>
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+RTCClientVideoTracksCallback<ConferenceSession>
+RTCClientAudioTracksCallback<ConferenceSession>
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```kotlin
+RTCClientVideoTracksCallback<ConferenceSession>
+RTCClientAudioTracksCallback<ConferenceSession>
+```
+
+</TabItem>
+</Tabs>
+
+For setting video track for ConferenceSession - the `ConferenceSurfaceView` (`RTCSurfaceView` v2) class is provided.
+
+## Join video room
+
+You can join room as a listener or as a publisher. As listener you subscribe only to the publishers, not giving own video and audio streams.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+val conferenceRole = if (asListenerRole) ConferenceRole.LISTENER else ConferenceRole.PUBLISHER
+
+currentSession.joinDialog(dialogId, conferenceRole, object: ConferenceCallback <ArrayList<Int>> {
+...
+})
+
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+val conferenceRole = if (asListenerRole) ConferenceRole.LISTENER else ConferenceRole.PUBLISHER
+
+currentSession.joinDialog(dialogID, conferenceRole, object: ConferenceEntityCallback <ArrayList<Int>> {
+  ...
+})
+````
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+ConferenceRole conferenceRole = asListenerRole ? ConferenceRole.LISTENER : ConferenceRole.PUBLISHER;
+
+currentSession.joinDialog(dialogID, conferenceRole, new ConferenceEntityCallback<ArrayList<Integer>> {
+...
+});
+
+````
+
+</TabItem>
+</Tabs>
+
+## List online participants
+
+To list online users in a room:
+
+```kotlin
+currentSession.getOnlineParticipants(object: ConferenceCallback<Map<Int, Boolean>>(){
+    override fun onSuccess(result: Map<Int, Boolean>) {
+        // the result contains the map where key is the userId and value is true if this user is publisher and false if listener
+    }
+
+    override fun onError(ex: WsException) {}
+
+})
+```
+
+## Subscribe/unsubscribe
+
+For subscribing to the active publisher:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+currentSession.subscribeToPublisher(publisherUserId)
+````
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+currentSession.subscribeToPublisher(publisherUserId)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+currentSession.subscribeToPublisher(publisherUserId);
+```
+
+</TabItem>
+</Tabs>
+
+> **Note**:
+> You should subscribe to publishers only when session state becomes **connected**. Use `onStateChanged` callback method to track session states.
+
+If you are a listener, then you can subscribe to publishers right after successful `joinDialog`.
+
+For unsubscribing from publisher:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+currentSession.unsubscribeFromPublisher(publisherUserId)
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+currentSession.unsubscribeFromPublisher(publisherUserId)
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+currentSession.unsubscribeFromPublisher(publisherUserId);
+```
+
+</TabItem>
+</Tabs>
+
+## Leave
+
+To leave current room session:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2 kotlin'>
+```kotlin
+currentSession.leave()
+```
+
+</TabItem>
+<TabItem label='SDK v1 kotlin (deprecated)'>
+```kotlin
+currentSession.leave()
+```
+
+</TabItem>
+<TabItem label='SDK v1 java (deprecated)'>
+```java
+currentSession.leave();
+```
+
+</TabItem>
+</Tabs>
+
+## Mute audio
+
+```kotlin
+val localAudioTrack: ConnectycubeAudioTrack? = currentSession.mediaStreamManager.localAudioTrack
+
+// mute
+localAudioTrack.enabled = false
+
+// unmute
+localAudioTrack.enabled = true
+
+// is muted?
+val isEnabled = localAudioTrack.enabled
+````
+
+## Mute video
+
+```kotlin
+val localVideoTrack: ConnectycubeVideoTrack? = currentSession.mediaStreamManager.localVideoTrack
+
+// mute
+localVideoTrack.enabled = false
+
+// unmute
+localVideoTrack.enabled = true
+
+// is muted?
+val isEnabled = localVideoTrack.enabled
+
+````
+
+## Switch video cameras
+
+You can switch the video camera during a call (default is front camera):
+
+```kotlin
+val cameraSwitchHandler: CameraVideoCapturer.CameraSwitchHandler = object: CameraVideoCapturer.CameraSwitchHandler {
+    override fun onCameraSwitchDone(isFrontCamera: Boolean) {
+
+    }
+
+    override fun onCameraSwitchError(e: String?) {
+
+    }
+
+}
+
+val videoCapturer = currentSession.mediaStreamManager.videoCapturer
+videoCapturer.switchCamera(cameraSwitchHandler)
+````
+
+## WebRTC Stats reporting
+
+Stats reporting is an insanely powerful tool which can help to debug a call if there are any problems with it
+(e.g. lags, missing audio/video etc.). To enable stats report you should first set stats reporting frequency using `WebRTCConfig`
+method below:
+
+```kotlin
+//Coming soon
+//ConnectycubeStatsReport
+```
+
+### Monitoring mic level and video bitrate using Stats
+
+Also, we prepared the helpful manager `ConnectycubeStatsReport` for processing Stats reports and getting
+some helpful information like the opponent's mic level and video bitrate.
+
+For its work, you just need to configure the `WebRTCConfig` as described above. Then create the
+instance of `ConnectycubeStatsReportsManager` and initialize it with the call session.
+
+```kotlin
+//Coming soon
+//ConnectycubeStatsReportsManager
+```
+
+## Recording
+
+Server-side recording is available. Read more about Recording feature https://connectycube.com/2021/02/23/connectycube-releases-server-side-calls-recording-along-with-new-meetings-api/

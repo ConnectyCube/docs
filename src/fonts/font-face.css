@@ -1,0 +1,119 @@
+@font-face {
+  font-family: 'Tommy-Soft-Black';
+  src: url('./MADE-Tommy-Soft-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tommy-Soft-ExtraBold';
+  src: url('./MADE-Tommy-Soft-ExtraBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tommy-Soft-Bold';
+  src: url('./MADE-Tommy-Soft-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tommy-Soft-Medium';
+  src: url('./MADE-Tommy-Soft-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tommy-Soft-Regular';
+  src: url('./MADE-Tommy-Soft-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tommy-Soft-Light';
+  src: url('./MADE-Tommy-Soft-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tommy-Soft-Thin';
+  src: url('./MADE-Tommy-Soft-Thin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Poppins-Regular';
+  src: url('./Poppins-Regular.ttf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RadikalTrial-Black';
+  src: url('./RadikalTrial-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RadikalTrial-Bold';
+  src: url('./RadikalTrial-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RadikalTrial-Medium';
+  src: url('./RadikalTrial-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RadikalTrial-Regular';
+  src: url('./RadikalTrial-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RadikalTrial-Light';
+  src: url('./RadikalTrial-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RadikalTrial-Thin';
+  src: url('./RadikalTrial-Thin.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RadikalTrial-UltraThin';
+  src: url('./RadikalTrial-UltraThin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}

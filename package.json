@@ -1,0 +1,30 @@
+{
+  "name": "connectycube-docs",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "format": "prettier --write \"**/*.mdx\"",
+    "env:dev": "cp config/.env.development .env",
+    "env:prod": "cp config/.env.production .env"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/starlight": "^0.34.3",
+    "@iconify/json": "^2.2.212",
+    "astro": "^5.9.1",
+    "dotenv": "^16.4.5",
+    "sharp": "^0.32.5",
+    "typescript": "^5.4.5",
+    "unplugin-icons": "^0.19.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.2.0",
+    "eslint-plugin-mdx": "^3.1.5",
+    "prettier": "^3.2.5"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

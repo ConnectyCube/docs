@@ -1,0 +1,1018 @@
+---
+title: Video Calling
+description: Empower your Flutter applications with our Video Calling P2P API. Enable secure and immersive peer-to-peer video calls for enhanced user experience
+head:
+  - tag: title
+    content: Flutter Video Calling P2P API | ConnectyCube
+sidebar: 
+    label: Video calling
+    order: 5
+---
+
+ConnectyCube **Video Calling P2P API** is built on top of [WebRTC](https://webrtc.org/) protocol
+and based on top of [WebRTC Mesh](https://webrtcglossary.com/mesh/) architecture.
+
+Max people per P2P call is 4.
+
+> To get a difference between **P2P calling** and **Conference calling** please read
+our [ConnectyCube Calling API comparison](https://connectycube.com/2020/04/15/connectycube-calling-api-comparison/) blog page.
+
+## Required preparations for supported platforms
+
+#### iOS
+
+Add the following entries to your _Info.plist_ file, located in `<project root>/ios/Runner/Info.plist`:
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>$(PRODUCT_NAME) Camera Usage!</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>$(PRODUCT_NAME) Microphone Usage!</string>
+```
+
+This entries allow your app to access the camera and microphone.
+
+#### Android
+
+Ensure the following permission is present in your Android Manifest file, located in `<project root>/android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<uses-feature android:name="android.hardware.camera" />
+<uses-feature android:name="android.hardware.camera.autofocus" />
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+```
+
+If you need to use a Bluetooth device, please add:
+
+```xml
+<uses-permission android:name="android.permission.BLUETOOTH" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+```
+
+The Flutter project template adds it, so it may already be there.
+
+Also you will need to set your build settings to Java 8, because official WebRTC jar now uses static methods in `EglBase` interface. Just add this to your app level `build.gradle`:
+
+```groovy
+android {
+    //...
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+```
+
+If necessary, in the same `build.gradle` you will need to increase `minSdkVersion` of `defaultConfig` up to `18` (currently default Flutter generator set it to `16`).
+
+#### macOS
+
+Add the following entries to your _*.entitlements_ files, located in `<project root>/macos/Runner`:
+
+```xml
+<key>com.apple.security.network.client</key>
+<true/>
+<key>com.apple.security.device.audio-input</key>
+<true/>
+<key>com.apple.security.device.camera</key>
+<true/>
+```
+
+This entries allow your app to access the internet, microphone, and camera.
+
+#### Windows
+
+It does not require any special preparations.
+
+#### Web
+
+It does not require any special preparations.
+
+#### Linux
+
+It does not require any special preparations.
+
+## P2PClient setup
+
+[ConnectyCube Chat API](/flutter/messaging) is used as a signaling transport for Video Calling API,
+so in order to start using Video Calling API you need to [connect to Chat](/flutter/messaging#connect-to-chat).
+
+To manage P2P calls in flutter you should use `P2PClient`. Please see code below to find out possible functionality.
+
+```dart
+P2PClient callClient = P2PClient.instance; // returns instance of P2PClient
+
+callClient.init(); // starts listening of incoming calls
+callClient.destroy(); // stops listening incoming calls and clears callbacks
+
+// calls when P2PClient receives new incoming call
+callClient.onReceiveNewSession = (incomingCallSession) {
+   
+};
+
+// calls when any callSession closed
+callClient.onSessionClosed = (closedCallSession) {
+   
+};
+
+// creates new P2PSession 
+callClient.createCallSession(callType, opponentsIds);
+```
+
+## Create call session
+
+In order to use Video Calling API you need to create a call session object - choose your opponents with whom you
+will have a call and a type of session (VIDEO or AUDIO). `P2PSession` creates via `P2PClient`:
+
+```dart
+P2PClient callClient; //callClient created somewhere
+
+Set<int> opponentsIds = {};
+int callType = CallType.VIDEO_CALL; // or CallType.AUDIO_CALL
+
+P2PSession callSession = callClient.createCallSession(callType, opponentsIds);
+```
+
+## Add listeners
+
+Below described main helpful callbacks and listeners:
+
+```dart
+callSession.onLocalStreamReceived = (mediaStream) {
+  // called when local media stream completely prepared 
+
+  // display the stream in UI
+  // ...
+};
+
+callSession.onRemoteStreamReceived = (callSession, opponentId, mediaStream) {
+  // called when remote media stream received from opponent
+};
+
+callSession.onRemoteStreamRemoved = (callSession, opponentId, mediaStream) {
+  // called when remote media was removed
+};
+
+callSession.onUserNoAnswer = (callSession, opponentId) {
+  // called when did not receive an answer from opponent during timeout (default timeout is 60 seconds)
+};
+
+callSession.onCallRejectedByUser = (callSession, opponentId, [userInfo]) {
+  // called when received 'reject' signal from opponent
+};
+  
+callSession.onCallAcceptedByUser = (callSession, opponentId, [userInfo]){
+  // called when received 'accept' signal from opponent
+};
+  
+callSession.onReceiveHungUpFromUser = (callSession, opponentId, [userInfo]){
+  // called when received 'hungUp' signal from opponent
+};
+  
+callSession.onSessionClosed = (callSession){
+  // called when current session was closed
+};
+```
+
+## Initiate a call
+
+```dart
+Map<String, String> userInfo = {};
+
+callSession.startCall(userInfo);
+```
+
+The `userInfo` is used to pass any extra parameters in the request to your opponents.
+
+After this, your opponents will receive a new call session in callback:
+
+```dart
+callClient.onReceiveNewSession = (incomingCallSession) {
+  
+};
+```
+
+## Accept a call
+
+To accept a call the following code snippet is used:
+
+```dart
+Map<String, String> userInfo = {}; // additional info for other call members
+callSession.acceptCall(userInfo);
+```
+
+After this, you will get a confirmation in the following callback:
+
+```dart
+callSession.onCallAcceptedByUser = (callSession, opponentId, [userInfo]){
+  
+};
+```
+
+Also, both the caller and opponents will get a special callback with the remote stream:
+
+```dart
+callSession.onRemoteStreamReceived = (callSession, opponentId, mediaStream) {
+  // create video renderer and set media stream to it
+  RTCVideoRenderer streamRender = RTCVideoRenderer();
+  await streamRender.initialize();
+  streamRender.srcObject = mediaStream;
+  streamRender.objectFit = RTCVideoViewObjectFit.RTCVideoViewObjectFitCover;
+  
+  // create view to put it somewhere on screen
+  RTCVideoView videoView = RTCVideoView(streamRender);
+};
+```
+
+From this point, you and your opponents should start seeing each other.
+
+## Receive a call in background
+
+See [CallKit section](#callkit) below.
+
+## Reject a call
+
+```dart
+Map<String, String> userInfo = {}; // additional info for other call members
+
+callSession.reject(userInfo);
+```
+
+After this, the caller will get a confirmation in the following callback:
+
+```dart
+callSession.onCallRejectedByUser = (callSession, opponentId, [userInfo]) {
+
+};
+```
+
+Sometimes, it could a situation when you received a call request and want to reject it, but the call 
+session object has not arrived yet. It could be in a case when you integrated CallKit to receive 
+call requests while an app is in background/killed state. To do a reject in this case, the following 
+snippet can be used:
+
+```dart
+String callSessionId; // the id of incoming call session
+Set<int> callMembers; // the ids of all call members including the caller and excluding the current user
+Map<String, String> userInfo = {}; // additional info about performed action (optional)
+      
+rejectCall(callSessionId, callMembers, userInfo: userInfo);
+```
+
+## End a call
+
+```dart
+Map<String, String> userInfo = {}; // additional info for other call members
+
+callSession.hungUp(userInfo);
+```
+
+After this, the opponents will get a confirmation in the following callback:
+
+```dart
+callSession.onReceiveHungUpFromUser = (callSession, opponentId, [userInfo]){
+  
+};
+```
+
+## Monitor connection state
+
+To monitor the states of your peer connections (users) you need to implement the `RTCSessionStateCallback` abstract class:
+```dart
+callSession.setSessionCallbacksListener(this);
+callSession.removeSessionCallbacksListener();
+```
+
+```dart
+/// Called in case when connection with the opponent is started establishing
+@override
+void onConnectingToUser(P2PSession session, int userId) {}
+
+/// Called in case when connection with the opponent is established
+@override
+void onConnectedToUser(P2PSession session, int userId) {}
+
+/// Called in case when connection is closed
+@override
+void onConnectionClosedForUser(P2PSession session, int userId) {}
+
+/// Called in case when the opponent is disconnected
+@override
+void onDisconnectedFromUser(P2PSession session, int userId) {}
+
+/// Called in case when connection has failed with the opponent
+@override
+void onConnectionFailedWithUser(P2PSession session, int userId) {}
+```
+
+## Tackling Network changes
+
+If a user's network environment changes (e.g., switching from Wi-Fi to mobile data), the existing call connection might no longer be valid. Normally, in a case of short network interruptions, the ConnectyCube SDK will automatically restore the call so you can see via `RTCSessionStateCallback` callback with `peer connection state` changing to `onDisconnectedFromUser` and then again to `onConnectedToUser`.
+
+But not all cases are the same, and in some of them the connection needs to be **manually** refreshed due to various issues like NAT or firewall behavior changes or even longer network environment changes, e.g. when a user is offline for more than 30 seconds.
+
+This is where ICE restart helps to re-establish the connection to find a new network path for communication.
+
+The correct and recommended way for an application to handle all such 'bad' cases is to trigger an ICE restart when the connection state goes to either `FAILED` or `DISCONNECTED` for an extended period of time (e.g. > 30 seconds).
+
+  
+```dart
+  code snippet with ice restart (coming soon)
+```
+
+## Mute audio
+
+```dart
+bool mute = true; // false - to unmute, default value is false
+callSession.setMicrophoneMute(mute);
+```
+
+## Switch audio output
+
+For iOS/Android platforms use:
+
+```dart
+bool enabled = false; // true - to switch to sreakerphone, default value is false
+callSession.enableSpeakerphone(enable);
+```
+
+For Chrome-based browsers and Desktop platforms use:
+
+```dart
+if (kIsWeb) {
+  remoteRenderers.forEach(renderer) {
+    renderer.audioOutput(deviceId);
+  });
+} else {
+  callSession.selectAudioOutput(deviceId);
+}
+```
+
+## Mute video
+
+```dart
+bool enabled = false; // true - to enable local video track, default value for video calls is true
+callSession.setVideoEnabled(enabled);
+```
+
+## Switch video cameras
+
+For iOS/Android platforms use:
+
+```dart
+callSession.switchCamera().then((isFrontCameraSelected){
+  if(isFrontCameraSelected) {
+    // front camera selected
+  } else {
+    // back camera selected
+  }
+}).catchError((error) {
+  // switching camera failed
+});
+```
+
+For the Web platform and Desktop platforms use:
+
+```dart
+callSession.switchCamera(deviceId: deviceId);
+```
+
+## Get available cameras list
+
+```dart
+var cameras = await callSession.getCameras(); // call only after `initLocalMediaStream()`
+```
+
+## Get available Audio input devices list
+
+```dart
+var audioInputs = await callSession.getAudioInputs(); // call only after `initLocalMediaStream()`
+```
+
+## Get available Audio output devices list
+
+```dart
+var audioOutputs = await callSession.getAudioOutputs(); // call only after `initLocalMediaStream()`
+```
+
+## Use the custom media stream
+
+```dart
+MediaStream customMediaStream;
+    
+callSession.replaceMediaStream(customMediaStream);
+```
+
+## Toggle the torch
+
+```dart
+var enable = true; // false - to disable the torch
+
+callSession.setTorchEnabled(enable);
+```
+
+## Screen Sharing
+
+The Screen Sharing feature allows you to share the screen from your device to other call members.
+Currently the Connectycube Flutter SDK supports the Screen Sharing feature for all supported platforms.
+
+For switching to the screen sharing during the call use next code snippet:
+
+```dart
+P2PSession callSession; // the existing call session
+
+callSession.enableScreenSharing(true, requestAudioForScreenSharing: true); // for switching to the screen sharing
+
+callSession.enableScreenSharing(false); // for switching to the camera streaming
+```
+
+
+### Android specifics of targeting the `targetSdkVersion` to the version **31** and above
+
+After updating the `targetSdkVersion` to the version **31** you can encounter an error:
+
+```log
+java.lang.SecurityException: Media projections require a foreground service of type ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+
+```
+
+To avoid it do the next changes and modifications in your project:
+
+1.&nbsp; Connect the `flutter_background` plugin to your project using:
+
+```yaml
+flutter_background: ^x.x.x
+
+```
+
+2.&nbsp; Add to the file `app_name/android/app/src/main/AndroidManifest.xml` to section `manifest` next permissions:
+
+```xml
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+```
+
+3.&nbsp; Add to the file `app_name/android/app/src/main/AndroidManifest.xml` to section `application` next service:
+
+```xml
+<service 
+    android:name="de.julianassmann.flutter_background.IsolateHolderService"
+    android:foregroundServiceType="mediaProjection"
+    android:enabled="true"
+    android:exported="false"/>
+```
+
+4.&nbsp; Create the next function somewhere in your project:
+
+```dart
+Future<bool> initForegroundService() async {
+    final androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: 'App name',
+      notificationText: 'Screen sharing is in progress',
+      notificationImportance: AndroidNotificationImportance.Default,
+      notificationIcon: AndroidResource(
+        name: 'ic_launcher_foreground',
+        defType: 'drawable'),
+    );
+   return FlutterBackground.initialize(androidConfig: androidConfig);
+}
+```
+
+and call it somewhere after the initialization of the app or before starting the screen sharing.
+
+5.&nbsp; Call the function `FlutterBackground.enableBackgroundExecution()` just before starting the screen
+sharing and function `FlutterBackground.disableBackgroundExecution()` after ending the screen sharing
+or finishing the call.
+
+### IOS screen sharing using the Screen Broadcasting feature.
+
+The Connectycube Flutter SDK supports two types of Screen sharing on the iOS platform. There are 
+**In-app screen sharing** and **Screen Broadcasting**. The **In-app screen sharing** doesn't 
+require any additional preparation on the app side. But the **Screen Broadcasting** feature 
+requires some. 
+
+All required features we already added to our [P2P Calls sample](https://github.com/ConnectyCube/connectycube-flutter-samples/tree/master/p2p_call_sample).
+
+Below is the step-by-step guide on adding it to your app. It contains the following steps:
+1. Add the `Broadcast Upload Extension`;
+2. Add required files from our sample to your iOS project;
+3. Update project configuration files with your credentials;
+
+#### Add the `Broadcast Upload Extension`
+
+For creating the extension you need to add a new target to your application, selecting the 
+`Broadcast Upload Extension` template. Fill in the desired name, change the language to Swift, make 
+sure `Include UI Extension` (see screenshot) is not selected, as we don't need custom UI for our case, then press 
+Finish. You will see that a new folder with the extension's name was added to the project's tree, 
+containing the `SampleHandler.swift` class. Also, make sure to update the Deployment Info, for the 
+newly created extension, to iOS 14 or newer. To learn more about creating App Extensions check the 
+[official documentation](https://developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/ExtensionCreation.html).
+
+<kbd class="img-wrapper"><img src="/images/code_samples/flutter/screen_sharing_ios_broadcast_ext.png" alt="Broadcast Upload Extension" width="auto" height="440" /></kbd>
+
+#### Add the required files from our sample to your own iOS project
+
+After adding the extension you should add prepared files from our sample to your own project. Copy 
+next files from our [`Broadcast Extension`](https://github.com/ConnectyCube/connectycube-flutter-samples/tree/master/p2p_call_sample/ios/Broadcast%20Extension) directory: `Atomic.swift`, 
+`Broadcast Extension.entitlements` (the name can be different according to your extension's name),
+`DarwinNotificationCenter.swift`, `SampleHandler.swift` (replace the automatically created file), 
+`SampleUploader.swift`, `SocketConnection.swift`. Then open your project in Xcode and link these files 
+with your iOS project using Xcode tools. For it, call the context menu of your extension directory, select 
+'Add Files to "Runner"...' (see screenshot) and select files copied to your extension directory before.
+
+<kbd class="img-wrapper"><img src="/images/code_samples/flutter/screen_sharing_ios_broadcast_sync_files.png" alt="Sync Broadcast Upload Extension files" width="auto" height="380" /></kbd>
+
+#### Update project configuration files
+
+Do the following for your iOS project configuration files:
+
+1.&nbsp; Add both the app and the extension to the same App Group. For it, add to both (app and extension) 
+`*.entitlements` files next lines:
+```xml
+<key>com.apple.security.application-groups</key>
+<array>
+    <string>group.com.connectycube.flutter</string>
+</array>
+```
+where the `group.com.connectycube.flutter` is your App group. To learn about working with app groups, 
+see [Adding an App to an App Group](https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/EntitlementKeyReference/Chapters/EnablingAppSandbox.html#//apple_ref/doc/uid/TP40011195-CH4-SW19). 
+We recommend you create the app group in the Apple Developer Console before. 
+
+Next, add the App group id value to the 
+app's `Info.plist` of your app for the `RTCAppGroupIdentifier` key:
+
+```xml
+<key>RTCAppGroupIdentifier</key>
+<string>group.com.connectycube.flutter</string>
+```
+where the `group.com.connectycube.flutter` is your App group.
+
+2.&nbsp; Add a new key `RTCScreenSharingExtension` to the app's `Info.plist` with the extension's `Bundle Identifier` 
+as the value:
+```xml
+<key>RTCScreenSharingExtension</key>
+<string>com.connectycube.flutter.p2p-call-sample.app.Broadcast-Extension</string>
+```
+where the `com.connectycube.flutter.p2p-call-sample.app.Broadcast-Extension` is the Bundle ID of your
+Broadcast Extension. Take it from the Xcode 
+
+<kbd class="img-wrapper"><img alt="Broadcast Extension Bundle ID" src="/images/code_samples/flutter/screen_sharing_ios_broadcast_extension_bundle_id.png" height="200" /></kbd>
+
+3.&nbsp; Update `SampleHandler.swift`'s `appGroupIdentifier` constant with the App Group name your 
+app and extension are both registered to.
+
+```swift
+static let appGroupIdentifier = "group.com.connectycube.flutter"
+```
+where the `group.com.connectycube.flutter` is your app group.
+
+4.&nbsp; Make sure `voip` is added to `UIBackgroundModes`, in the app's `Info.plist`, in order to work when 
+the app is in the background.
+
+```xml
+<key>UIBackgroundModes</key>
+<array>
+    <string>remote-notification</string>
+    <string>voip</string>
+    <string>audio</string>
+</array>
+```
+
+After performing mentioned actions you can switch to Screen sharing during the call using `useIOSBroadcasting = true`:
+```dart
+_callSession.enableScreenSharing(true, useIOSBroadcasting: true);
+```
+
+### Requesting desktop capture source
+
+Desktop platforms require the capture source (Screen or Window) for screen sharing. We prepared a widget ready
+for using that requests the available sources from the system and provides them to a user for selection.
+After that, you can use it as the source for screen sharing.
+
+In code it can look in a next way:
+
+```dart
+
+var desktopCapturerSource = isDesktop
+    ? await showDialog<DesktopCapturerSource>(
+      context: context,
+      builder: (context) => ScreenSelectDialog())
+    : null;
+
+
+callSession.enableScreenSharing(true, desktopCapturerSource: desktopCapturerSource);
+```
+
+The default capture source (usually it is the default screen) will be captured if set `null` as a capture source
+for the desktop platform.
+
+
+## WebRTC Stats reporting
+
+Stats reporting is an insanely powerful tool that can provide detailed info about a call. 
+There is info about the media, peer connection, codecs, certificates, etc. To enable stats report you should first set stats 
+reporting frequency using `RTCConfig`. 
+
+```dart
+RTCConfig.instance.statsReportsInterval = 200; // receive stats report every 200 milliseconds
+```
+
+Then you can subscribe to the stream with reports using the instance of the call session:
+
+```dart
+_callSession.statsReports.listen((event) {
+  var userId = event.userId; // the user's id the stats related to
+  var stats = event.stats;   // available stats
+});
+```
+
+To disable fetching Stats reports set this parameter as 0.
+
+### Monitoring mic level and video bitrate using Stats
+
+Also, we prepared the helpful manager `CubeStatsReportsManager` for processing Stats reports and getting 
+some helpful information like the opponent's mic level and video bitrate. 
+
+For its work, you just need to configure the `RTCConfig` as described above. Then create the 
+instance of `CubeStatsReportsManager` and initialize it with the call session. 
+
+```dart
+final CubeStatsReportsManager _statsReportsManager = CubeStatsReportsManager();
+
+_statsReportsManager.init(_callSession);
+```
+
+After that you can subscribe on the interested data:
+
+```dart
+_statsReportsManager.micLevelStream.listen((event) { 
+  var userId = event.userId;
+  var micLevel = event.micLevel; // the mic level from 0 to 1
+});
+    
+_statsReportsManager.videoBitrateStream.listen((event) { 
+  var userId = event.userId;
+  var bitRate = event.bitRate; // the video bitrate in kbits/sec
+});
+```
+
+After finishing the call you should dispose of the manager for avoiding memory leaks. You can do it in
+the `onSessionClosed` callback:
+
+```dart
+void _onSessionClosed(session) {
+  // ...
+
+  _statsReportsManager.dispose();
+    
+  // ..
+}
+```
+
+
+## Configurations
+
+ConnectyCube Flutter SDK provides possibility to change some default parameters for call session.
+
+### Media stream configurations
+
+Use instance of `RTCMediaConfig` class to change some default media stream configs.
+
+```dart
+RTCMediaConfig mediaConfig = RTCMediaConfig.instance;
+mediaConfig.minHeight = 720; // sets preferred minimal height for local video stream, default value is 320 
+mediaConfig.minWidth = 1280; // sets preferred minimal width for local video stream, default value is 480 
+mediaConfig.minFrameRate = 30; // sets preferred minimal framerate for local video stream, default value is 25 
+mediaConfig.maxBandwidth = 512; // sets initial maximum bandwidth in kbps, set to `0` or `null` for disabling the limitation, default value is 0
+```
+
+### Call quality
+
+**Limit bandwidth**
+
+Despite WebRTC engine uses automatic quality adjustement based on available Internet bandwidth,
+sometimes it's better to set the max available bandwidth cap which will result in a better and smoother user experience.
+For example, if you know you have a bad internet connection, you can limit the max available bandwidth to e.g. 256 Kbit/s.
+
+This can be done either when initiate a call via `RTCMediaConfig.instance.maxBandwidth = 512` 
+which will result in limiting the max vailable bandwidth for ALL participants or/and during a call:
+
+```dart
+callSession.setMaxBandwidth(256); // set some maximum value to increase the limit
+```
+
+which will result in limiting the max available bandwidth for current user only.
+
+### Call connection configurations
+
+Use instance of `RTCConfig` class to change some default call connection configs.
+
+```dart
+RTCConfig config = RTCConfig.instance;
+config.noAnswerTimeout = 90; // sets timeout in seconds before stop dilling to opponents, default value is 60
+config.dillingTimeInterval = 5; // time interval in seconds between 'invite call' packages, default value is 3 seconds, min value is 3 seconds
+config.statsReportsInterval = 300; // the time interval in milliseconds of periodic fetching reports, default value is 0 (disabled)
+```
+
+## Recording
+
+(coming soon)
+
+## CallKit
+
+> A ready [Flutter P2P Calls sample](https://github.com/ConnectyCube/connectycube-flutter-samples/tree/master/p2p_call_sample) 
+with CallKit integrated is available at GitHub. All the below code snippets will be taken from it.
+
+For mobile apps, it can be a situation when an opponent's user app is either in closed (killed)or 
+background (inactive) state.
+
+In this case, to be able to still receive a call request, a flow called CallKit is used. It's a mix 
+of CallKit API + Push Notifications API + VOIP Push Notifications API.
+
+The complete flow is similar to the following:
+
+- a call initiator should send a push notification (for iOS it's a VOIP push notification) along with 
+a call request
+- when an opponent's app is killed or in a background state - an opponent will receive a push 
+notification about an incoming call, so the CallKit incoming call screen will be displayed, where a 
+user can accept/reject the call.
+
+The [ConnectyCube Flutter Call Kit](https://pub.dev/packages/connectycube_flutter_call_kit) plugin 
+should be used to integrate CallKit functionality.
+
+Below we provide a detailed guide on additional steps that needs to be performed in order to integrate 
+CallKit into a Flutter app.
+
+### Connect the&nbsp;[ConnectyCube Flutter Call Kit](https://pub.dev/packages/connectycube_flutter_call_kit) plugin
+
+Please follow the [plugin's guide](https://pub.dev/packages/connectycube_flutter_call_kit#configure-your-project) 
+on how to connect it to your project. 
+
+**Initiate a call**
+
+When initiate a call via `callSession.startCall()`, additionally we need to send a push notification 
+(standard for Android user and VOIP for iOS). This is required for an opponent(s) to be able to receive 
+an incoming call request when an app is in the background or killed state.
+
+The following request will initiate a standard push notification for Android and a VOIP push notification for iOS:
+
+
+```dart
+P2PSession callSession; // the call session created before 
+
+CreateEventParams params = CreateEventParams();
+params.parameters = {
+  'message': "Incoming ${callSession.callType == CallType.VIDEO_CALL ? "Video" : "Audio"} call",
+  'call_type': callSession.callType,
+  'session_id': callSession.sessionId,
+  'caller_id': callSession.callerId,
+  'caller_name': callerName,
+  'call_opponents': callSession.opponentsIds.join(','),
+  'signal_type': 'startCall',
+  'ios_voip': 1,
+};
+
+params.notificationType = NotificationType.PUSH;
+params.environment = kReleaseMode ? CubeEnvironment.PRODUCTION : CubeEnvironment.DEVELOPMENT;
+params.usersIds = callSession.opponentsIds.toList();
+
+createEvent(params.getEventForRequest()).then((cubeEvent) {
+    // event was created
+}).catchError((error) {
+    // something went wrong during event creation
+});
+```
+
+### Receive call request in background/killed state
+
+The goal of CallKit is to receive call requests when an app is in the background or killed state.
+For iOS we will use CallKit and for Android we will use standard capabilities.
+
+The [ConnectyCube Flutter Call Kit](https://pub.dev/packages/connectycube_flutter_call_kit) plugin 
+covers all main functionality for receiving the calls in the background.
+
+First of all, you need to subscribe on a push notifications to have the possibility of receiving a 
+push notifications in the background.
+
+You can request the subscription token from the [ConnectyCube Flutter Call Kit](https://pub.dev/packages/connectycube_flutter_call_kit) plugin. 
+It will return the VoIP token for iOS and the common FCM token for Android.
+
+Then you can create the subscription using the token above. In code it will look next:
+
+```dart
+ConnectycubeFlutterCallKit.getToken().then((token) {
+  if (token != null) {
+    subscribe(token);
+  }
+});
+
+subscribe(String token) async {
+  CreateSubscriptionParameters parameters = CreateSubscriptionParameters();
+  parameters.pushToken = token;
+  parameters.environment = kReleaseMode ? CubeEnvironment.PRODUCTION : CubeEnvironment.DEVELOPMENT;
+
+  if (Platform.isAndroid) {
+    parameters.channel = NotificationsChannels.GCM;
+    parameters.platform = CubePlatform.ANDROID;
+  } else if (Platform.isIOS) {
+    parameters.channel = NotificationsChannels.APNS_VOIP;
+    parameters.platform = CubePlatform.IOS;
+  }
+
+  String? deviceId = await PlatformDeviceId.getDeviceId;
+  parameters.udid = deviceId;
+
+  var packageInfo = await PackageInfo.fromPlatform();
+  parameters.bundleIdentifier = packageInfo.packageName;
+
+  createSubscription(parameters.getRequestParameters()).then((cubeSubscriptions) {
+    log('[subscribe] subscription SUCCESS');
+  }).catchError((error) {
+    log('[subscribe] subscription ERROR: $error');
+  });
+}
+```
+
+During the Android app life, the FCM token can be refreshed. Use the next code snippet to listen to this 
+event and renew the subscription on the Connectycube back-end:
+
+```dart
+ConnectycubeFlutterCallKit.onTokenRefreshed = (token) {
+  subscribe(token);
+};
+```
+
+After correctly performing the steps above the [ConnectyCube Flutter Call Kit](https://pub.dev/packages/connectycube_flutter_call_kit) 
+plugin automatically will show the CallKit screen for iOS and the Incoming Call notification for Android.
+
+
+> **Note**:
+> Pay attention: the **Android** platform requires some preparations for showing the notifications, 
+working in the background, and starting the app from a notification. It includes next:
+
+- Request the permission on showing notifications (using the [permission_handler](https://pub.dev/packages/permission_handler) plugin):
+
+```dart
+requestNotificationsPermission() async {
+  var isPermissionGranted = await Permission.notification.isGranted;
+  if(!isPermissionGranted){
+    await Permission.notification.request();
+  }
+}
+```
+
+- Request permission for starting the app from notification (using the [permission_handler](https://pub.dev/packages/permission_handler) plugin):
+
+```dart
+Future<void> checkSystemAlertWindowPermission(BuildContext context) async {
+  if (Platform.isAndroid) {
+    var androidInfo = await DeviceInfoPlugin().androidInfo;
+    var sdkInt = androidInfo.version.sdkInt!;
+
+    if (sdkInt >= 31) {
+      if (await Permission.systemAlertWindow.isDenied) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return Expanded(
+              child: AlertDialog(
+                title: Text('Permission required'),
+                content: Text(
+                    'For accepting the calls in the background you should provide access to show System Alerts from the background. Would you like to do it now?'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Permission.systemAlertWindow.request().then((status) {
+                        if (status.isGranted) {
+                          Navigator.of(context).pop();
+                        }
+                      });
+                    },
+                    child: Text(
+                      'Allow',
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                      'Later',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      }
+    }
+  }
+}
+```
+
+- Start/Stop foreground service when navigating the app to the background/foreground during the call (using [flutter_background](https://pub.dev/packages/flutter_background) plugin):
+
+```dart
+Future<bool> startBackgroundExecution() async {
+  if (Platform.isAndroid) {
+    return initForegroundService().then((_) {
+      return FlutterBackground.enableBackgroundExecution();
+    });
+  } else {
+    return Future.value(true);
+  }
+}
+
+Future<bool> stopBackgroundExecution() async {
+  if (Platform.isAndroid && FlutterBackground.isBackgroundExecutionEnabled) {
+    return FlutterBackground.disableBackgroundExecution();
+  } else {
+    return Future.value(true);
+  }
+}
+```
+Follow the official [plugin's doc](https://pub.dev/packages/flutter_background) for more details.
+
+
+### Listen to the callbacks from [ConnectyCube Flutter Call Kit](https://pub.dev/packages/connectycube_flutter_call_kit) plugin
+
+After displaying the CallKit/Call Notification you need to react to callbacks produced by this screen. 
+Use the next code snippets to start listening to them:
+
+```dart
+ConnectycubeFlutterCallKit.instance.init(
+        onCallAccepted: _onCallAccepted,
+        onCallRejected: _onCallRejected,
+);
+
+if (Platform.isIOS) {
+  ConnectycubeFlutterCallKit.onCallMuted = _onCallMuted;
+}
+
+ConnectycubeFlutterCallKit.onCallRejectedWhenTerminated = onCallRejectedWhenTerminated;
+
+Future<void> _onCallMuted(bool mute, String uuid) async {
+  // Called when the system or user mutes a call
+  currentCall?.setMicrophoneMute(mute);
+}
+
+Future<void> _onCallAccepted(CallEvent callEvent) async {
+  // Called when the user answers an incoming call via Call Kit
+  ConnectycubeFlutterCallKit.setOnLockScreenVisibility(isVisible: true); // useful on Android when accept the call from the Lockscreen
+  currentCall?.acceptCall();
+}
+
+Future<void> _onCallRejected(CallEvent callEvent) async {
+  // Called when the user ends an incoming call via Call Kit
+  if (!CubeChatConnection.instance.isAuthenticated()) {
+    // reject the call via HTTP request
+    rejectCall(
+        callEvent.sessionId, {...callEvent.opponentsIds, callEvent.callerId});
+  } else {
+    currentCall?.reject();
+  }
+}
+
+/// This provided handler must be a top-level function and cannot be
+/// anonymous otherwise an [ArgumentError] will be thrown.
+@pragma('vm:entry-point')
+Future<void> onCallRejectedWhenTerminated(CallEvent callEvent) async {
+  var currentUser = await SharedPrefs.getUser();
+  initConnectycubeContextLess();
+
+  return rejectCall(
+      callEvent.sessionId, {...callEvent.opponentsIds.where((userId) => currentUser!.id != userId), callEvent.callerId});
+}
+
+initConnectycubeContextLess() {
+  CubeSettings.instance.applicationId = config.APP_ID;
+  CubeSettings.instance.authorizationKey = config.AUTH_KEY;
+  CubeSettings.instance.authorizationSecret = config.AUTH_SECRET;
+  CubeSettings.instance.onSessionRestore = () {
+    return SharedPrefs.getUser().then((savedUser) {
+      return createSession(savedUser);
+    });
+  };
+}
+```
+
+Also, when performing any operations e.g. start call, accept, reject, stop, etc, we need to report back to CallKit lib - to have both app UI and CallKit UI in sync:
+
+```dart
+ConnectycubeFlutterCallKit.reportCallAccepted(sessionId: callUUID);
+
+
+ConnectycubeFlutterCallKit.reportCallEnded(sessionId: callUUID); 
+```
+
+For the `callUUID` we will use call's `currentCall!.sessionId`.
+
+
+> All the above code snippets can be found in a ready [Flutter P2P Calls sample](https://github.com/ConnectyCube/connectycube-flutter-samples/tree/master/p2p_call_sample)
+with CallKit integrated.

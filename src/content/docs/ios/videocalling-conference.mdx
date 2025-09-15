@@ -1,0 +1,716 @@
+---
+title: Multiparty Video Conferencing feature overview
+description: Discover the simplicity of integrating conference video calling into your iOS app with our easy-to-use API. Empower users to connect from anywhere.
+head:
+  - tag: title
+    content: iOS Multiparty Video Conferencing API | ConnectyCube
+sidebar:
+  label: Conference Video calling
+  order: 6
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+ConnectyCube **Multiparty Video Conferencing API** is built on top of [WebRTC](https://webrtc.org/) protocol and based on top of [WebRTC SFU](https://webrtcglossary.com/sfu/) architecture.
+
+Max people per Conference call is 12.
+
+Video Conferencing is available starting from [Advanced plan](https://connectycube.com/pricing/).
+
+> To get a difference between **P2P calling** and **Conference calling** please read our [ConnectyCube Calling API comparison](https://connectycube.com/2020/04/15/connectycube-calling-api-comparison/) blog page.
+
+## Features supported
+
+- Video/Audio Conference with up to 12 people
+- Join-Rejoin video room functionality (like Skype)
+- Guest rooms
+- Mute/Unmute audio/video streams
+- Display bitrate
+- Switch video input device (camera)
+
+## Config
+
+**ConferenceConfig** class introduces new setting for Conference - conference endpoint.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConferenceConfig.companion.url = ""
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+**CYBCallConfig** class introduces new setting for Conference - conference endpoint.
+
+To set a specific conference endpoint use this method.
+
+```objectivec
++ (void)setConferenceEndpoint:(NSString *)conferenceEndpoint;
+```
+
+</TabItem>
+</Tabs>
+
+> **_Note_**
+>
+> Endpoint should be a correct ConnectyCube Conference server endpoint.
+
+Use this method to get a current conference endpoint (default is nil):
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+ConferenceConfig.companion.url
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
++ (NSString *)conferenceEndpoint;
+```
+
+</TabItem>
+</Tabs>
+
+## Create meeting
+
+In order to have a conference call, a meeting object has to be created.
+
+```swift
+let now = Int64(Date().timeIntervalSince1970) / 1000
+
+let meeting = ConnectycubeMeeting()
+meeting.name = "My meeting"
+meeting.startDate = now
+meeting.endDate = now + 60 * 60
+meeting.attendees = [ConnectycubeAttendee(id: 123, email: "superman@mail.com"), ConnectycubeAttendee(id: 124, email: "superman2@mail.com")]
+meeting.record = false
+meeting.chat = false
+meeting.public_ = true
+meeting.scheduled = false
+// meeting.notify = true //notify feature is available starting from the [Advanced plan](https://connectycube.com/pricing/)
+// meeting.notifyBefore = ConnectycubeNotifyBefore(metric: ConnectycubeMeetingMetric.hours, value: 1) //notify feature is available starting from the [Advanced plan](https://connectycube.com/pricing/)
+        
+
+ConnectyCube().createMeeting(meeting: meeting, successCallback: { createdMeeting in
+    let confRoomId = createdMeeting.id
+}, errorCallback: { error in })
+```
+
+- `name` - the meeting name.
+- As for `attendees` - either ConnectyCube users ids or external emails can be provided.
+- `start_date` - the date when meeting starts.
+- `end_date` - the date when meeting ends.
+- Pass `chat = true` if you want to have a chat connected to meeting.
+- Pass `record = true` if you want to have a meeting call recorded. Read more about Recording feature https://connectycube.com/2021/02/23/connectycube-releases-server-side-calls-recording-along-with-new-meetings-api/
+
+Once meeting is created, you can use `meeting.id` as a conf room identifier in the below requests when join a call.
+
+## Conference client
+
+Conference module has its own client which is described in current part.
+
+### Events
+
+Conference client delegate is inherited from base client delegate and has all of its protocol methods implemented as well.
+
+#### Base client delegate protocol methods
+
+All protocol methods below have their own explanation inlined and are optional.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+/**
+ *  Called when session state has been changed.
+ *
+ *  @param session P2PSession instance
+ *  @param state session state
+ *
+ */
+func onStateChanged(session: BaseSession<AnyObject>, state: BaseSessionRTCSessionState) {}
+
+/**
+ * Called in case when connection with opponent is established
+ * 
+ * @param session P2PSession instance
+ * @param userId ID of opponent
+ */
+func onConnectedToUser(session: BaseSession<AnyObject>, userId: Int32) {}
+
+/**
+ * 
+ * Called in case when connection failed with user
+ * 
+ * @param session P2PSession instance
+ * @param userId ID of opponent
+ */
+func onDisconnectedFromUser(session: BaseSession<AnyObject>, userId: Int32) {}
+
+/**
+ * 
+ * Called in case when connection is closed for user
+ * 
+ * @param session P2PSession
+ * @param userId ID of opponent
+ */
+func onConnectionClosedForUser(session: BaseSession<AnyObject>, userId: Int32) {}
+
+/**
+ * 
+ * Called when received remote video track from user
+ * 
+ * @param videoTrack ConnectycubeVideoTrack instance
+ * @param userId ID of user
+ */
+func onRemoteVideoTrackReceive(session: BaseSession<AnyObject>, videoTrack: ConnectycubeVideoTrack, userId: Int32) {}
+
+/**
+ * 
+ * Called when received remote audio track from user
+ * 
+ * @param videoTrack ConnectycubeAudioTrack instance
+ * @param userId ID of user
+ */
+func onRemoteAudioTrackReceive(session: BaseSession<AnyObject>, audioTrack: ConnectycubeAudioTrack, userId: Int32) {}
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+/**
+ *  Called by timeout with updated stats report for user ID.
+ *
+ *  @param session CYBCallSession instance
+ *  @param report  CYBCallStatsReport instance
+ *  @param userID  user ID
+ *
+ *  @remark Configure time interval with [CYBCallConfig setStatsReportTimeInterval:timeInterval].
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session updatedStatsReport:(CYBCallStatsReport *)report forUserID:(NSNumber *)userID;
+
+/**
+ *  Called when session state has been changed.
+ *
+ *  @param session CYBCallSession instance
+ *  @param state session state
+ *
+ *  @discussion Use this to track a session state. As SDK 2.3 introduced states for session, you can now manage your own states based on this.
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session didChangeState:(CYBCallSessionState)state;
+
+/**
+ *  Called when received remote audio track from user.
+ *
+ *  @param audioTrack CYBCallAudioTrack instance
+ *  @param userID     ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session receivedRemoteAudioTrack:(CYBCallAudioTrack *)audioTrack fromUser:(NSNumber *)userID;
+
+/**
+ *  Called when received remote video track from user.
+ *
+ *  @param videoTrack CYBCallVideoTrack instance
+ *  @param userID     ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session receivedRemoteVideoTrack:(CYBCallVideoTrack *)videoTrack fromUser:(NSNumber *)userID;
+
+/**
+ *  Called when connection is closed for user.
+ *
+ *  @param session CYBCallSession instance
+ *  @param userID  ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session connectionClosedForUser:(NSNumber *)userID;
+
+/**
+ *  Called when connection is initiated with user.
+ *
+ *  @param session CYBCallSession instance
+ *  @param userID  ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session startedConnectingToUser:(NSNumber *)userID;
+
+/**
+ *  Called when connection is established with user.
+ *
+ *  @param session CYBCallSession instance
+ *  @param userID  ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session connectedToUser:(NSNumber *)userID;
+
+/**
+ *  Called when disconnected from user.
+ *
+ *  @param session CYBCallSession instance
+ *  @param userID  ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session disconnectedFromUser:(NSNumber *)userID;
+
+/**
+ *  Called when connection failed with user.
+ *
+ *  @param session CYBCallSession instance
+ *  @param userID  ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session connectionFailedForUser:(NSNumber *)userID;
+
+/**
+ *  Called when session connection state changed for a specific user.
+ *
+ *  @param session CYBCallSession instance
+ *  @param state   state - @see CYBCallConnectionState
+ *  @param userID  ID of user
+ */
+- (void)session:(__kindof CYBCallBaseSession *)session didChangeConnectionState:(CYBCallConnectionState)state forUser:(NSNumber *)userID;
+```
+
+</TabItem>
+</Tabs>
+
+#### Conference client delegate protocol methods
+
+All protocol methods below are conference client specific, optional to be implemented and have their own explanation inlined.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+/**
+ * Called when some publisher (user) joined to the video room
+ */
+func onPublisherLeft(userId: KotlinInt?) {}
+
+/**
+ *Called when some publisher left room
+ */
+func onPublishersReceived(publishers: [KotlinInt]?) {}
+
+/**
+ *Called when media - audio or video type, is received
+ */
+func onMediaReceived(type: String?, success\_ success: Bool) {}
+
+/**
+ * Called when slowLink is received. SlowLink with uplink=true means you notified several missing packets from server, while uplink=false means server is not receiving all your packets.
+ */
+func onSlowLinkReceived(uplink: Bool, lost: Int32) {}
+
+/**
+ * Called when received errors from server
+ */
+func onError(ex\_ ex: WsException?) {}
+
+/**
+ * Called when ConferenceSession is closed
+ */
+func onSessionClosed(session: ConferenceBaseSession) {}
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+/**
+ *  Called when session was created on server.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *
+ *  @discussion When this method is called, session instance that was already created by CYBCallConferenceClient
+ *  will be assigned valid session ID from server.
+ *
+ *  @see CYBCallConferenceSession, CYBCallConferenceClient
+ */
+- (void)didCreateNewSession:(CYBCallConferenceSession *)session;
+
+/**
+ *  Called when join to session is performed and acknowledged by server.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *  @param chatDialogID chat dialog ID
+ *  @param publishersList array of user IDs, that are currently publishers
+ *
+ *  @see CYBCallConferenceSession
+ */
+- (void)session:(CYBCallConferenceSession *)session didJoinChatDialogWithID:(NSString *)chatDialogID publishersList:(NSArray <NSNumber *> *)publishersList;
+
+/**
+ *  Called when new publisher did join.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *  @param userID new publisher user ID
+ *
+ *  @see CYBCallConferenceSession
+ */
+- (void)session:(CYBCallConferenceSession *)session didReceiveNewPublisherWithUserID:(NSNumber *)userID;
+
+/**
+ *  Called when publisher did leave.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *  @param userID publisher that left user ID
+ *
+ *  @see CYBCallConferenceSession
+ */
+- (void)session:(CYBCallConferenceSession *)session publisherDidLeaveWithUserID:(NSNumber *)userID;
+
+/**
+ *  Called when session did receive error from server.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *  @param error received error from server
+ *
+ *  @note Error doesn't necessarily means that session is closed. Can be just a minor error that can be fixed/ignored.
+ *
+ *  @see CYBCallConferenceSession
+ */
+- (void)session:(CYBCallConferenceSession *)session didReceiveError:(NSError *)error;
+
+/**
+ *  Called when slowlink was received.
+ *
+ *  @param session  CYBCallConferenceSession instance
+ *  @param uplink   whether the issue is uplink or not
+ *  @param nacks    number of nacks
+ *
+ *  @discussion this callback is triggered when serber reports trouble either sending or receiving media on the
+ *  specified connection, typically as a consequence of too many NACKs received from/sent to the user in the last
+ *  second: for instance, a slowLink with uplink=true means you notified several missing packets from server,
+ *  while uplink=false means server is not receiving all your packets.
+ *
+ *  @note useful to figure out when there are problems on the media path (e.g., excessive loss), in order to
+ *  possibly react accordingly (e.g., decrease the bitrate if most of our packets are getting lost).
+ *
+ *  @see CYBCallConferenceSession
+ */
+- (void)session:(CYBCallConferenceSession *)session didReceiveSlowlinkWithUplink:(BOOL)uplink nacks:(NSNumber *)nacks;
+
+/**
+ *  Called when media receiving state was changed on server.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *  @param mediaType media type
+ *  @param receiving whether media is receiving by server
+ *
+ *  @see CYBCallConferenceSession, CYBCallConferenceMediaType
+ */
+- (void)session:(CYBCallConferenceSession *)session didChangeMediaStateWithType:(CYBCallConferenceMediaType)mediaType receiving:(BOOL)receiving;
+
+/**
+ *  Session did initiate close request.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *
+ *  @discussion 'sessionDidClose:withTimeout:' will be called after server will close session with callback
+ *
+ *  @see CYBCallConferenceSession
+ */
+- (void)sessionWillClose:(CYBCallConferenceSession *)session;
+
+/**
+ *  Called when session was closed completely on server.
+ *
+ *  @param session CYBCallConferenceSession instance
+ *  @param timeout whether session was closed due to timeout on server
+ *
+ *  @see CYBCallConferenceSession
+ */
+- (void)sessionDidClose:(CYBCallConferenceSession *)session withTimeout:(BOOL)timeout;
+```
+
+</TabItem>
+</Tabs>
+
+### Conference client interface
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+**ConferenceCalls** is a singleton based class which is used to create and operate with conference sessions.
+
+```swift
+//MARK: ConferenceCallback
+let conferenceType = CallType.video
+
+ConnectyCube().conferenceCalls.createSession(userId: userId, callType: conferenceType, callback: self)
+
+extension YourClass: ConferenceCallback {
+    func onSuccess(result: Any?) {
+        let conferenceSession = result as! ConferenceSession
+    }
+
+    func onError(ex: WsException) {
+    }
+
+}
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+**CYBCallConferenceClient** is a singleton based class which is used to create and operate with conference sessions. It has observer (delegates) manager, which can be activated/deactivated with two simple methods:
+
+```objectivec
+/**
+ *  Add delegate to the observers list.
+ *
+ *  @param delegate delegate that conforms to CYBCallConferenceClientDelegate protocol
+ *
+ *  @see CYBCallConferenceClientDelegate
+ */
+- (void)addDelegate:(id<CYBCallConferenceClientDelegate>)delegate;
+
+/**
+ *  Remove delegate from the observers list.
+ *
+ *  @param delegate delegate that conforms to CYBCallConferenceClientDelegate protocol
+ *
+ *  @see CYBCallConferenceClientDelegate
+ */
+- (void)removeDelegate:(id<CYBCallConferenceClientDelegate>)delegate;
+```
+
+Delegate should conform to **CYBCallConferenceClientDelegate** protocol, which is inherited from base client delegate.
+
+In order to create new conference session you should use method below:
+
+```objectivec
+/**
+ *  Send create session request.
+ *
+ *  @note Returns session without ID. When session will be created on server
+ *  ID will be assigned and session will be returned in 'didCreateNewSession:' callback.
+ *
+ *  @see CYBCallConferenceClientDelegate
+ *
+ *  @param chatDialogID chat dialog ID
+ */
+- (CYBCallConferenceSession *)createSessionWithChatDialogID:(NSString *)chatDialogID;
+```
+
+It will create session locally first, without session ID, until server will perform a ```didCreateNewSession:``` callback in **CYBCallConferenceClientDelegate** protocol, where session ID will be assigned and session will receive its **CYBCallSessionStateNew** state. After that you can join or leave (destroy) it, etc. Conference session is explained in the following paragraph.
+
+</TabItem>
+</Tabs>
+
+## Join video room
+
+You can join room as a listener or as a publisher. As listener you subscribe only to the publishers, not giving own video and audio streams.
+
+```swift
+class ConferenceCallbackJoinDialog: ConferenceCallback {
+    func onSuccess(result: Any?) {
+        let userIds: [Int] = result as! [Int]
+     }
+
+     func onError(ex: WsException) {
+     }
+}
+let conferenceRole = ConferenceRole.publisher // or ConferenceRole.listener
+conferenceSession.joinDialog(dialogId: dialogId, conferenceRole: conferenceRole, callback: ConferenceCallbackJoinDialog())
+```
+
+## List online participants
+
+To list online users in a room:
+
+```swift
+class CallbackOnlineParticipants: ConferenceCallback<NSDictionary> {
+    override func onSuccess(result: NSDictionary?) {
+        // the result contains the dictionary where key is the userId and value is true if this user is publisher and false if listener
+    }
+
+    override func onError(ex: WsException) {}
+}
+conferenceSession.getOnlineParticipants(callback: CallbackOnlineParticipants())
+```
+
+## Conference session
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+**ConferenceSession** is inherited from base session class, and has all of its basics, such as ```state```, ```currentUserId```, ```localMediaStream```, ability to get remote audio and video tracks for a specific user IDs.
+
+You can subscribe and unsubscribe from publishers using methods below.
+
+```swift
+conferenceSession.subscribeToPublisher(publisherId: publisherId)
+
+conferenceSession.unsubscribeFromPublisher(publisherId: publisherId)
+```
+
+And in order to close/leave session you can perform the following method:
+
+```swift
+conferenceSession.leave()
+```
+
+> ***Note***
+>
+> You do not need to be joined as publisher in order to perform subscription based operations in session.
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+**CYBCallConferenceSession** is inherited from base session class, and has all of its basics, such as ```state```, ```currentUserID```, ```localMediaStream```, ability to get remote audio and video tracks for a specific user IDs:
+
+```objectivec
+/**
+ *  Remote audio track with opponent user ID.
+ *
+ *  @param userID opponent user ID
+ *
+ *  @return CYBCallAudioTrack audio track instance
+ */
+- (CYBCallAudioTrack *)remoteAudioTrackWithUserID:(NSNumber *)userID;
+
+/**
+ *  Remote video track with opponent user ID.
+ *
+ *  @param userID opponent user ID
+ *
+ *  @return CYBCallVideoTrack video track instance
+ */
+- (CYBCallVideoTrack *)remoteVideoTrackWithUserID:(NSNumber *)userID;
+```
+
+and ability to get a connection state for a specific user ID if his connection is opened:
+
+```objectivec
+/**
+ *  Connection state for opponent user ID.
+ *
+ *  @param userID opponent user ID
+ *
+ *  @return CYBCallConnectionState connection state for opponent user ID
+ */
+- (CYBCallConnectionState)connectionStateForUser:(NSNumber *)userID;
+```
+
+See **CYBCallBaseSession** class for more inline documentation.
+As for conference specific methods, conference session ID is **NSNumber**. Each conference session is tied to a specific ConnectyCube dialog ID (**NSString**).
+
+It also has a publishers list property. But publisher list will be only valid if you perform join to that session as publisher using method below:
+
+```objectivec
+/**
+ *  Perform join room as publisher.
+ *
+ *  @discussion 'session:didJoinChatDialogWithID:publishersList:' will be called upon successful join.
+ *
+ *  @see CYBCallConferenceClientDelegate
+ */
+- (void)joinAsPublisher;
+```
+
+This method joins session and will publish your feed (make you an active publisher in room). Everyone in room will be able to subscribe and receive your feed.
+
+> **_Note_**
+>
+> Only can be used when session has a valid session ID, e.g. is created on server and notified to you with `didCreateNewSession:` callback from **CYBCallConferenceClientDelegate** protocol.
+
+You can subscribe and unsubscribe from publishers using methods below.
+
+> **_Note_**
+>
+> You do not need to be joined as publisher in order to perform subscription based operations in session.
+
+```objectivec
+/**
+ *  Subscribe to publisher's with user ID feed.
+ *
+ *  @param userID active publisher's user ID
+ *
+ *  @discussion If you want to receive publishers feeds, you need to subscribe to them.
+ *
+ *  @note User must be an active publisher.
+ */
+- (void)subscribeToUserWithID:(NSNumber *)userID;
+
+/**
+ *  Unsubscribe from publisher's with user ID feed.
+ *
+ *  @param userID active publisher's user ID
+ *
+ *  @discussion Do not need to be used when publisher did leave room, in that case unsibscribing will be performing automatically. Use if you need to unsubscribe from active publisher's feed.
+ *
+ *  @note User must be an active publisher.
+ */
+- (void)unsubscribeFromUserWithID:(NSNumber *)userID;
+```
+
+> ***Note***
+>
+> These methods can also be used only when session has a valid session ID, e.g. is created on server and notified to you with ```didCreateNewSession:``` callback from **CYBCallConferenceClientDelegate** protocol.
+
+And in order to close/leave session you can perform the following method:
+
+```objectivec
+/**
+ *  Leave chat room and close session.
+ *
+ *  @discussion 'sessionWillClose:' will be called when all connection are closed, 'sessionDidClose:withTimeout:' will be called when session will be successfully closed by server.
+ */
+- (void)leave;
+```
+
+> ***Note***
+>
+> This method can be called in any state of the session and will always close it no matter what.
+
+</TabItem>
+</Tabs>
+
+## Mute audio
+
+You can disable/enable audio during a call:
+
+```swift
+conferenceSession?.mediaStreamManager?.localAudioTrack?.enabled = !(conferenceSession?.mediaStreamManager?.localAudioTrack!.enabled)!
+```
+
+## Mute video
+
+You can disable/enable video during a call:
+
+```swift
+conferenceSession?.mediaStreamManager?.localVideoTrack?.enabled = !(conferenceSession?.mediaStreamManager?.localVideoTrack!.enabled)!
+```
+
+## Switch video cameras
+
+You can switch the video capture position during a call (default: front camera):
+
+```swift
+conferenceSession?.mediaStreamManager?.videoCapturer?.switchCamera()
+```
+
+## WebRTC Stats reporting
+
+Stats reporting is an insanely powerful tool which can help to debug a call if there are any problems with it
+(e.g. lags, missing audio/video etc.). To enable stats report you should first set stats reporting frequency using `WebRTCConfig`
+method below:
+
+```swift
+//Coming soon
+//ConnectycubeStatsReport
+```
+
+### Monitoring mic level and video bitrate using Stats
+
+Also, we prepared the helpful manager `ConnectycubeStatsReport` for processing Stats reports and getting
+some helpful information like the opponent's mic level and video bitrate.
+
+For its work, you just need to configure the `WebRTCConfig` as described above. Then create the
+instance of `ConnectycubeStatsReportsManager` and initialize it with the call session.
+
+```swift
+//Coming soon
+//ConnectycubeStatsReportsManager
+```
+
+## Recording
+
+Server-side recording is available. Read more about Recording feature https://connectycube.com/2021/02/23/connectycube-releases-server-side-calls-recording-along-with-new-meetings-api/
+
+
+## Examples and implementations
+
+**sample-videochat-conference-objc** is a great example of our ConnectyCubeCalls Conference module, classes to look at: **CallViewController**.

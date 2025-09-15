@@ -1,0 +1,330 @@
+---
+title: Make first call
+description: A guide with the essential steps of how to make the first call via ConnectyCube Flutter Video SDK - from session creation to initialising and accepting the call.
+head:
+  - tag: title
+    content: Make first call guide | ConnectyCube Flutter SDK
+sidebar: 
+    label: Make first call
+    order: 2
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+**ConnectyCube’s Video Calling Peer-to-Peer (P2P) API** provides a solution for integrating real-time video and audio calling into your application. This API enables you to create smooth one-on-one and group video calls, supporting a wide range of use cases like virtual meetings, telemedicine consultations, social interactions, and more. The P2P approach ensures that media streams are transferred directly between users whenever possible, minimizing latency and delivering high-quality audio and video. 
+
+If you’re planning to build a new app, we recommend starting with one of our [code samples apps](/flutter/getting-started/code-samples/) as a foundation for your client app.        
+If you already have an app and you are looking to add chat to it, proceed with this guide. This guide walks you through installing the ConnectyCube SDK in your app, configure it and then initiating the call to the opponent.
+
+## Before you start
+
+Before you start, make sure:
+1. You have access to ConnectyCube account. If you don’t have an account, [sign up here](https://admin.connectycube.com/register).
+2. An app created in ConnectyCube dashboard. Once logged into [your ConnectyCube account](https://admin.connectycube.com/signin), create a new application and make a note of the app credentials (app ID and auth key) that you’ll need for authentication.
+
+## Step 1: Configure SDK
+
+To use voice and video calls in a client app, you should install, import and configure ConnectyCube SDK.
+
+<div class="disclaimer">
+  <strong>Note:</strong>  If the app is already created during the onboarding process and you followed all the instructions, you can skip the 'Configure SDK' step and start with <a href="#step-2-required-preparations-for-supported-platforms">Required preparations for supported platforms</a> . 
+</div>
+
+<div style={{
+  fontSize: "0.9em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "10px"
+}}>
+</div>
+
+### Install SDK
+
+Install package from the command line:
+
+```bash
+flutter pub add connectycube_sdk
+```
+
+### Import SDK
+
+Add the following import statement to start using all classes and methods.
+
+```dart
+import 'package:connectycube_sdk/connectycube_sdk.dart';
+```
+
+### Initialize SDK
+
+Initialize the SDK with your ConnectyCube application credentials. You can access your application credentials in [ConnectyCube Dashboard](https://admin.connectycube.com):
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v3'>
+```dart
+String appId = "";
+String authKey = "";
+
+init(appId, authKey);
+```
+</TabItem>
+
+<TabItem label='SDK v2'>
+```dart
+String appId = "";
+String authKey = "";
+String authSecret = "";
+
+init(appId, authKey, authSecret);
+```
+</TabItem>
+</Tabs>
+
+After all the above is done, the app is ready to be enriched with the voice and video calls functionality. 
+
+## Step 2: Required preparations for supported platforms
+
+#### iOS
+
+Add the following entries to your *Info.plist* file, located in *project root/ios/Runner/Info.plist*:
+```dart
+<key>NSCameraUsageDescription</key>
+<string>$(PRODUCT_NAME) Camera Usage!</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>$(PRODUCT_NAME) Microphone Usage!</string>
+```
+
+These entries allow your app to access the camera and microphone.
+
+#### Android
+
+Ensure the following permission is present in your Android Manifest file, located in *project root/android/app/src/main/AndroidManifest.xml*:
+
+```dart
+<uses-feature android:name="android.hardware.camera" />
+<uses-feature android:name="android.hardware.camera.autofocus" />
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+```
+
+If you need to use a Bluetooth device, please add:
+
+```dart
+<uses-permission android:name="android.permission.BLUETOOTH" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+```
+
+The Flutter project template adds it, so it may already be there.
+
+Also you will need to set your build settings to Java 8, because official WebRTC jar now uses static methods in EglBase interface. Just add this to your app level build.gradle:
+
+```dart
+android {
+    //...
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+```
+
+If necessary, in the same build.gradle you will need to increase minSdkVersion of defaultConfig up to 18 (currently default Flutter generator set it to 16).
+
+#### macOS
+
+Add the following entries to your *.entitlements* files, located in *project root/macos/Runner*:
+
+```dart
+<key>com.apple.security.network.client</key>
+<true/>
+<key>com.apple.security.device.audio-input</key>
+<true/>
+<key>com.apple.security.device.camera</key>
+<true/>
+```
+
+These entries allow your app to access the internet, microphone, and camera.
+
+#### Windows / Web / Linux
+
+It does not require any special preparations.
+
+## Step 3: Create and Authorise User
+
+As a starting point, the user's session token needs to be created allowing to send and receive messages in chat.    
+
+```dart
+CubeUser user = CubeUser(login: "user_login", password: "super_sequre_password");
+
+createSession(user)
+    .then((cubeSession) {})
+    .catchError((error){});
+```
+
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> such approach with the automatic user creation works well for testing purposes and while the application isn’t launched on production. For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+## Step 4: Connect User to chat 
+
+Connecting to the chat is an essential step in enabling real-time communication.
+
+**ConnectyCube Chat API** is used as a signaling transport for Video Calling API, so in order to start using Video Calling API you need to connect to Chat:
+
+```dart
+CubeUser user = CubeUser(id: 4448514, password: "supersecurepwd");
+
+CubeChatConnection.instance.login(user)
+      .then((loggedUser) {})
+      .catchError((error) {});
+```
+
+## Step 5: P2PClient setup
+
+To manage P2P calls in Flutter you should use `P2PClient`. The code below shows how to proceed with the functionality: 
+
+```dart
+P2PClient callClient = P2PClient.instance; // returns instance of P2PClient
+
+callClient.init(); // starts listening of incoming calls
+//callClient.destroy(); // stops listening incoming calls and clears callbacks
+
+// calls when P2PClient receives new incoming call
+callClient.onReceiveNewSession = (incomingCallSession) {
+
+};
+
+// calls when any callSession closed
+callClient.onSessionClosed = (closedCallSession) {
+
+};
+
+// creates new P2PSession
+callClient.createCallSession(callType, opponentsIds);
+```
+
+## Step 6: Create call session 
+
+In order to use Video Calling API you need to create a call session object - choose your opponents you will have a call with and a type of session (VIDEO or AUDIO). `P2PSession` creates via `P2PClient`:
+
+```dart
+P2PClient callClient; //callClient created somewhere
+
+Set<int> opponentsIds = {};
+int callType = CallType.VIDEO_CALL; // or CallType.AUDIO_CALL
+
+P2PSession callSession = callClient.createCallSession(callType, opponentsIds);
+```
+
+## Step 7: Add listeners 
+
+Below described the main helpful callbacks and listeners:
+
+```dart
+callSession.onLocalStreamReceived = (mediaStream) {
+  // called when local media stream completely prepared
+
+  // display the stream in UI
+  // ...
+};
+
+callSession.onRemoteStreamReceived = (callSession, opponentId, mediaStream) {
+  // called when remote media stream received from opponent
+};
+
+callSession.onRemoteStreamRemoved = (callSession, opponentId, mediaStream) {
+  // called when remote media was removed
+};
+
+callSession.onUserNoAnswer = (callSession, opponentId) {
+  // called when did not receive an answer from opponent during timeout (default timeout is 60 seconds)
+};
+
+callSession.onCallRejectedByUser = (callSession, opponentId, [userInfo]) {
+  // called when received 'reject' signal from opponent
+};
+
+callSession.onCallAcceptedByUser = (callSession, opponentId, [userInfo]){
+  // called when received 'accept' signal from opponent
+};
+
+callSession.onReceiveHungUpFromUser = (callSession, opponentId, [userInfo]){
+  // called when received 'hungUp' signal from opponent
+};
+
+callSession.onSessionClosed = (callSession){
+  // called when current session was closed
+};
+```
+
+## Step 8: Initiate call 
+
+```dart
+Map<String, String> userInfo = {};
+
+callSession.startCall(userInfo);
+```
+
+The `userInfo` is used to pass any extra parameters in the request to your opponents.
+
+After this, your opponents will receive a new call session in callback:
+
+```dart 
+callClient.onReceiveNewSession = (incomingCallSession) {
+
+};
+```
+
+## Step 9: Accept call 
+
+To accept a call the following code snippet is used:
+
+```dart
+Map<String, String> userInfo = {}; // additional info for other call members
+callSession.acceptCall(userInfo);
+```
+After this, you will get a confirmation in the following callback:
+```dart
+callSession.onCallAcceptedByUser = (callSession, opponentId, [userInfo]){
+
+};
+```
+
+Also, both the caller and opponent will get a special callback with the remote stream:
+
+```dart
+callSession.onRemoteStreamReceived = (callSession, opponentId, mediaStream) {
+  // create video renderer and set media stream to it
+  RTCVideoRenderer streamRender = RTCVideoRenderer();
+  await streamRender.initialize();
+  streamRender.srcObject = mediaStream;
+  streamRender.objectFit = RTCVideoViewObjectFit.RTCVideoViewObjectFitCover;
+
+  // create view to put it somewhere on screen
+  RTCVideoView videoView = RTCVideoView(streamRender);
+};
+```
+
+Great work! You've completed the essentials of making a call in ConnectyCube. From this point, you and your opponents should start seeing each other.
+
+
+#### What's next? 
+To enhance your calling feature with advanced functionalities, such as call recording, screen sharing, or integrating emojis and attachments during calls, follow the API guides below. These additions will help create a more dynamic and engaging experience for your users!
+* [Voice/video calling SDK documentation](/flutter/videocalling)
+* [Conference calling SDK documentation](/flutter/videocalling-conference/)
+

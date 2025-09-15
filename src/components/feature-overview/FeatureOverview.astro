@@ -1,0 +1,62 @@
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import GetStartedCard from './GetStartedCard.astro';
+import FeaturesCard from './FeaturesCard.astro';
+import Title from '../Title.astro';
+import type { PlatformCardType } from '../../data/types';
+
+const { data } = Astro.props;
+const { title, description, platforms, anchor, getStartedDescription } = data;
+---
+
+<div class="feature-overview-container">
+	<Title title={title} subtitle={description} anchor={anchor} />
+	<Tabs syncKey="feature-overview">
+		{
+			platforms.map(
+				({
+					name,
+					icon,
+					getStartedSection,
+					featuresSection,
+				}: PlatformCardType) => (
+					<TabItem label={name}>
+						<div class="cards-container">
+							<GetStartedCard
+								getStartedSection={getStartedSection}
+								icon={icon}
+								getStartedDescription={getStartedDescription}
+							/>
+							<FeaturesCard featuresSection={featuresSection} icon={icon} />
+						</div>
+					</TabItem>
+				)
+			)
+		}
+	</Tabs>
+</div>
+
+<style>
+	.feature-overview-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding-block: 38px;
+		margin: 0 auto;
+	}
+
+	.cards-container {
+		margin-top: 32px;
+	}
+
+	@media screen and (max-width: 768px) {
+		.feature-overview-container {
+			padding-block: 32px;
+		}
+
+		.cards-container {
+			margin-top: 16px;
+		}
+	}
+</style>

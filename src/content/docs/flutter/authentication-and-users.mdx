@@ -1,0 +1,426 @@
+---
+title: Authentication and Users
+description: Simplify user authentication in your Flutter app with our definitive API guide. Fortify your app's defenses and protect user data effectively.
+head:
+  - tag: title
+    content: Flutter Authentication and Users APIs | ConnectyCube
+sidebar: 
+    label: Authentication and Users
+    order: 3
+---
+
+Every user has to authenticate with ConnectyCube before using any ConnectyCube functionality.
+
+When someone connects with an application using ConnectyCube, the application will need to obtain a session token which provides temporary, secure access to ConnectyCube APIs.
+
+A session token is an opaque string that identifies a user and an application.
+
+## Create session token
+
+As a starting point, the user’s session token needs to be created allowing user any further actions within the app. Pass login/email and password to identify a user:
+
+```dart
+CubeUser user = CubeUser(login: "user_login", password: "super_sequre_password");
+
+createSession(user)
+    .then((cubeSession) {})
+    .catchError((error){});
+```
+
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+### Authentication via social provider
+
+Flutter SDK provides support for next social providers:
+- `CubeProvider.FACEBOOK`;
+- `CubeProvider.TWITTER`;
+
+The generalized method for signing-in via social provider is:
+```dart
+String socialProvider; // possible providers CubeProvider.FACEBOOK, CubeProvider.TWITTER
+String accessToken;
+String accessTokenSecret; // required only for CubeProvider.TWITTER provider
+
+createSessionUsingSocialProvider(socialProvider, accessToken, accessTokenSecret)
+  .then((cubeUser) {})
+  .catchError((error){});
+```
+
+#### Get Facebook Access token
+
+In order to use Facebook authentication you need to get an Access token first. Flutter has a few plugins that provide this feature. We will use the [flutter_facebook_auth](https://pub.dev/packages/flutter_facebook_auth) in our example. First, you must configure each supported platform according to the plugin [official documentation](https://facebook.meedu.app) web page. Then you can request the login via Facebook API and sign in to ConnectyCube using its credentials. Follow the code below on how to do this:
+
+```dart
+FacebookAuth.instance.login(permissions: ['email', 'public_profile']).then((result) {
+  if (result.status == LoginStatus.success) {
+    var accessToken = result.accessToken!.token;
+    
+    createSessionUsingSocialProvider(CubeProvider.FACEBOOK, accessToken).then((cubeUser) {
+      // `cubeUser` - the instance of the signed-in CubeUser
+    }).catchError((onError){
+      // process an error of signing-in to the ConnectyCube
+    });
+  } else {
+    // process other statuses (cancelled, failed, operationInProgress)
+  }
+});
+```
+
+#### Get Twitter Auth token and Auth Token Secret
+
+In order to use Twitter authentication you need to get an Auth token and Auth Token Secret first. Flutter has a few plugins that provide this feature. We will use the [twitter_login](https://pub.dev/packages/twitter_login) in our example. First, you must configure each supported platform according to the plugin [README](https://pub.dev/packages/twitter_login). Then you can request the login via Twitter API and sign in to ConnectyCube using its credentials. Follow the code below on how to do this:
+
+```dart
+var apiKey = ''; // the API Key from the Twitter developer console
+var apiSecretKey = ''; // the API Secret from the Twitter developer console
+var redirectURI = ''; // the registered Callback URLs in TwitterApp
+
+TwitterLogin(apiKey: apiKey, apiSecretKey: apiSecretKey, redirectURI: redirectURI).loginV2(forceLogin: true).then((authResult) {
+  if (authResult.status == TwitterLoginStatus.loggedIn) {
+    var authToken = authResult.authToken!;
+    var authSecret = authResult.authTokenSecret!;
+
+    createSessionUsingSocialProvider(CubeProvider.TWITTER, authToken, authSecret).then((cubeUser) {
+      // `cubeUser` - the instance of the signed-in CubeUser
+    }).catchError((onError){
+      // process an error of signing-in to the ConnectyCube
+    });
+  } else {
+    // process other statuses (cancelledByUser, error)
+  }
+});
+```
+
+### Authentication via phone number
+
+Sign In with phone number is supported with [Firebase Phone Authentication](https://firebase.google.com/docs/auth/flutter/phone-auth).
+
+The detailed guides on [How to configure Firebase in your project](/flutter/firebase-setup-guide#connect-firebase-sdk) and [How to get `accessToken`](/flutter/firebase-setup-guide#firebase-phone-authentication) are
+presented in our separated section [How to Setup Firebase](/flutter/firebase-setup-guide#how-to-setup-firebase).
+
+After receiving the `accessToken` you can use it for authentication using next API:
+
+```dart
+createSessionUsingFirebasePhone(projectId, accessToken).then((cubeUser) {
+  // user successfully authenticated on the Connectycube
+}).catchError((onError){
+  // error occurs during authentication on the Connectycube
+});
+```
+
+### Authentication via Firebase Email/Google Sign-In:
+
+This authentication method supports [Firebase Email/password sign-in](https://firebase.google.com/docs/auth/flutter/password-auth) 
+and [Google Sign-In](https://firebase.google.com/docs/auth/flutter/federated-auth#google).
+
+The detailed guides on [How to configure Firebase in your project](/flutter/firebase-setup-guide#connect-firebase-sdk) 
+and [How to get `accessToken`](/flutter/firebase-setup-guide#firebase-e-mail-authentication) are
+presented in our separated section [How to Setup Firebase](/flutter/firebase-setup-guide#how-to-setup-firebase).
+
+After receiving the `accessToken` you can use it for authentication using next API:
+
+```dart
+createSessionUsingFirebaseEmail(
+  DefaultFirebaseOptions.currentPlatform.projectId,
+  idToken)
+.then((cubeUser) {
+  // user successfully authenticated on the Connectycube
+}).catchError((onError) {
+  // error occurs during authentication on the Connectycube
+});
+```
+
+### Authentication via external identity provider
+
+**Custom Identity Provider (CIdP)** feature is necessary if you have your own user database and want to authenticate users in ConnectyCube against it. It works the same way as Facebook/Twitter SSO.
+
+With Custom Identity Provider feature you can continue use your user database instead of storing/copying user data to ConnectyCube database.
+
+#### CIdP high level integration flow
+
+To get started with **CIdP** integration, check the [Custom Identity Provider guide](/guides/custom-identity-provider) which describes high level integration flow.
+
+#### How to login via CIdP
+
+Once you done with the setup mapping in ConnectyCube Dashboard, it's time to verify the integration.
+To perform CIdP login, the same ConnectyCube [User Login API](/flutter/authentication-and-users/#upgrade-session-token-user-login) is used. You just use existing login request params to pass your external user token: 
+
+```dart
+CubeUser user = CubeUser(login: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIzNDU2Nzg5LCJuYW1lIjoiSm9zZXBoIn0.OpOSSw7e485LOP5PrzScxHb7SR6sAOMRckfFwi4rp7o");
+
+createSession(user)
+    .then((cubeUser) {})
+    .catchError((error){});
+```
+
+Once the login is successful, ConnectyCube will create an underalying User entity, so then you can use ConnectyCube APIs in a same way as you do with a normal login. With CIdP we do not have/store any user password in ConnectyCube User entity.
+
+Following further integration, you may need to connect to Chat. In a case of CIdP login, you do not have a user password. In such cases you should use ConnectyCube session token as a password for chat connection. [Follow the Connect to Chat with CIdP guide](/flutter/messaging/#connect-to-chat-using-custom-authentication-providers).
+
+### Create guest session
+
+To create a session with guest user use the following code:
+
+```dart
+var user = CubeUser(isGuest: true, fullName: 'Awesome Smith');
+
+createSession(user)
+    .then((cubeSession) {})
+    .catchError((error){});
+```
+
+## Session expiration
+
+Expiration time for session token is 2 hours after last request to API. If you perform query with expired token,  
+you will receive the error **Required session does not exist**. In this case you need to recreate a session token.
+
+Use `CubeSessionManager` to get information about current session state.
+
+```dart
+bool isValid = CubeSessionManager.instance.isActiveSessionValid();
+/// isValid == true - you have an active session
+/// isValid == false - you have an expired session and you should create new one
+```
+
+ConnectyCube Flutter SDK has the special callbаck for automatic session restoring.
+Just set it during the initialization ConnectyCube Flutter SDK in your project.
+
+```dart
+initConnectyCube() {
+    init("XXX", "XXXXXXXXXXXXXXX", "XXXXXXXXXXXXXXX", onSessionRestore: restoreSession);
+}
+
+Future<CubeSession> restoreSession() {
+  CubeUser savedUser; //some CubeUser, which was saved before
+
+  return createSession(savedUser);
+}
+
+```
+
+## Destroy session token
+
+To destroy a session use the following code:
+
+```dart
+int sessionId = 12345; // skip this parameter to delete current session
+
+deleteSession(sessionId)
+    .then((voidResult) {})
+    .catchError((error){});
+
+// used to delete all session except current  
+deleteSessionsExceptCurrent()
+    .then((voidResult) {})
+    .catchError((error){});
+```
+
+## User signup
+
+Only login (or email) + password are required for user to be created. Other parameters are optional:
+
+```dart
+CubeUser user = CubeUser(
+    login: 'marvin18',
+    password: 'supersecurepwd',
+    email: 'awesomeman@gmail.com',
+    fullName: 'Marvin Simon',
+    phone: '47802323143',
+    website: 'https://dozensofdreams.com',
+    customData: "{middle_name: 'Bartoleo'}");
+
+signUp(user)
+    .then((cubeUser) {})
+    .catchError((error){});
+```
+
+## User profile update
+
+```dart
+CubeUser user = CubeUser(
+    login: 'marvin18',
+    fullName: 'Marvin Simon');
+
+updateUser(user)
+      .then((updatedUser) {})
+      .catchError((error) {});
+```
+
+If you want to change your password, you need to provide 2 fields: `password` and `oldPassword`. Updated `user` entity will be returned.
+
+```dart
+CubeUser user = CubeUser(
+  login: 'marvin18',
+  password: "newPassword",
+  oldPassword: "oldPassword");
+
+updateUser(user)
+  .then((updatedUser) {})
+  .catchError((error) {});
+```
+
+## User avatar
+
+You can set a user's avatar. You just need to upload it to the ConnectyCube cloud storage and then connect to user.
+
+```dart
+File file; //some file from device storage
+CubeUser user; // some user to set avatar
+
+uploadFile(file, false)
+  .then((cubeFile) {
+    user.avatar = cubeFile.uid;
+    return updateUser(user);
+  })
+  .catchError((error) {});
+```
+
+Now, other users can get you avatar:
+
+```dart
+CubeUser user; // some user with avatar
+
+String avatarUrl = getPrivateUrlForUid(user.avatar);
+```
+
+## Password reset
+
+It's possible to reset a password via email:
+
+```dart
+resetPassword("awesomeman@gmail.com")
+    .then((voidResult) {})
+    .catchError((error) {});
+```
+
+If provided email is valid - an email with password reset instruction will be sent to it.
+
+## Retrieve users
+
+### Retrieve user by ID
+
+```dart
+int userId = 22;
+
+getUserById(userId)
+    .then((cubeUser) {})
+    .catchError((error) {});
+```
+
+### Retrieve users by IDs
+
+```dart
+Set<int> ids = {22, 33};
+
+getAllUsersByIds(ids)
+    .then((pagedResult) {})
+    .catchError((error) {});
+```
+
+### Retrieve user by login
+
+```dart
+String login = "marvin18";
+
+getUserByLogin(login)
+    .then((cubeUser) {})
+    .catchError((error) {});
+```
+
+### Retrieve user by email
+
+```dart
+String email = "marvin18@example.com";
+
+getUserByEmail(email)
+    .then((cubeUser) {})
+    .catchError((error) {});
+```
+
+### Retrieve users by full name
+
+```dart
+String fullName = "Marvin Samuel";
+
+getUsersByFullName(fullName)
+    .then((pagedResult) {})
+    .catchError((error) {});
+```
+
+### Retrieve user by phone number
+
+```dart
+String phoneNumber = "47802323143";
+
+getUserByPhoneNumber(phoneNumber)
+  .then((cubeUser) {})
+  .catchError((error) {});
+```
+
+### Retrieve user by external ID
+
+```dart
+var externalUserId = '6304a4399cf9db00200c1bd7';
+
+getUserByExternalUserId(externalUserId)
+  .then((cubeUser) {})
+  .catchError((error) {});
+```
+
+### Retrieve users by tags
+
+```dart
+Set<String> tags = {"apple"};
+
+getUsersByTags(tags)
+    .then((pagedResult) {})
+    .catchError((error) {});
+```
+
+### Retrieve users by parameters
+
+There is an available function for getting users by all available parameters and filters provided by 
+[link](/server/users#retrieve-users-v2)
+
+```dart
+var paginator = RequestPaginator(50, page: 0);
+var sorter = RequestSorter.desc('created_at');
+
+var parameters = {
+    'login': 'smith1',
+    'phone': '6754987345566',
+    'user_tags[nin]': ['vip'],
+    'updated_at[lte]': '2018-12-06T09:21:41Z'
+};
+      
+getUsers(parameters, paginator: paginator, sorter: sorter).then((response) {
+    var foundUsers = response?.items; 
+}).catchError((onError){
+        
+});
+```
+
+## Delete user
+
+A user can delete himself from the platform:
+
+```dart
+int userId = 123456;
+
+deleteUser(userId)
+    .then((cubeUser) {})
+    .catchError((error) {});
+```

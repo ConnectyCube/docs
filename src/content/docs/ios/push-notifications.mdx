@@ -1,0 +1,562 @@
+---
+title: Push Notifications
+description: Elevate your iOS app's performance with push notifications API guide. Keep users engaged with real-time updates, ensuring seamless interaction on the go.
+head:
+  - tag: title
+    content: iOS Push Notifications API | ConnectyCube
+sidebar:
+  label: Push notifications
+  order: 7
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+Push Notifications provide a way to deliver some information to user while he is not using your app actively.
+The following use cases can be covered additionally with push notifications:
+
+- send a chat message if recipient is offline (a push notification will be sent automatically)
+- make a video call with offline opponents (need to send a push notification manually)
+- request to add a user to contact list (need to send a push notification manually)
+
+## Create APNS certificate
+
+In order to start working with push notifications functionality you need to do some pre-steps:
+
+- Create APNS certificate. Each iOS application that uses Apple Push Notifications must have an APNS certificate.
+- Upload the APNS certificate to ConnectyCube Dashboard panel, Push Notifications module, Settings tab, Apple Push Notification Service (APNS) section.
+
+To get the information on how to create APNS certificates and upload them to Dashboard, please, refer to the [How to generate APNS certificate](/ios/how-to-create-apns-certificate) page.
+
+## Subscribe
+
+In order to start receiving push notifications you need to get the current device push token and subscribe with it on the backend as follows:
+
+> Note: You cannot test push notifications in the iOS simulator. You need a physical iOS device and an Apple developer’s account.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        UIApplication.shared.registerForRemoteNotifications()
+        return true
+    }
+
+...
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let deviceIdentifier: String = UIDevice.current.identifierForVendor!.uuidString
+
+        let subscriptionParameters = CreatePushSubscriptionParameters(environment: "development", channel: NotificationsChannels.shared.APNS, udid: deviceIdentifier, platform: "ios", pushToken: deviceToken.base64EncodedString(), bundleIdentifier: nil)
+
+        ConnectyCube().createPushSubscription(params: subscriptionParameters.getRequestParameters(), successCallback:{ subscriptions in
+            let subscriptionId = subscriptions.first?.id
+        }, errorCallback: { error in
+
+        })
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Failed to register for notifications: \(error.localizedDescription)")
+    }
+}
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    [[UIApplication sharedApplication] registerForRemoteNotifications];
+
+    return YES;
+}
+
+...
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+
+    NSString *deviceIdentifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+
+    CYBSubscription *subscription = [CYBSubscription subscription];
+    subscription.notificationChannel = CYBNotificationChannelAPNS;
+    subscription.deviceUDID = deviceIdentifier;
+    subscription.deviceToken = deviceToken;
+
+    [CYBRequest createSubscription:subscription successBlock:^(NSArray *subscriptions) {
+
+    } errorBlock:^(NSError *error) {
+
+    }];
+}
+
+- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
+    NSLog(@"Failed to register for notifications:%@", error);
+}
+@end
+```
+
+```swift
+
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+         UIApplication.shared.registerForRemoteNotifications()
+
+         return true
+    }
+
+    ...
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+
+        let deviceIdentifier: String = UIDevice.current.identifierForVendor!.uuidString
+        let subscription: Subscription! = Subscription()
+
+        subscription.notificationChannel = NotificationChannel.APNS
+        subscription.deviceUDID = deviceIdentifier
+        subscription.deviceToken = deviceToken
+
+        Request.createSubscription(subscription, successBlock: { (subscriptions) in
+
+        }) { (error) in
+
+        }
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Failed to register for notifications: \(error.localizedDescription)")
+    }
+}
+
+```
+
+</TabItem>
+</Tabs>
+
+> **Note**:
+> The device push token can change, even on the same device and with the same user. Make sure to update subscription every time when you get a new device token.
+
+## Subscribe for VoIP push notifications
+
+Normally, the VoIP push notifications are used in applications with video/audio calling capabilities.
+
+In the past, a VoIP app had to maintain a persistent network connection with a server to receive incoming calls and other data. This meant writing complex code that sent periodic messages back and forth between the app and the server to keep a connection alive, even when the app wasn’t in use. This technique resulted in frequent device wakes that wasted energy. It also meant that if a user quit the VoIP app, calls from the server could no longer be received.
+
+Instead of persistent connections, developers should use the VoIP push notifications.
+
+VoIP push notifications are different than regular APNS notifications mainly in how they are setup in the iOS app. iOS SDK provides the [PushKit API](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/EnergyGuide-iOS/OptimizeVoIP.html) to implement VoIP push notifications.
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+import PushKit
+
+
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate, PKPushRegistryDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        self.voipRegistration()
+        return true
+    }
+
+      // Register for VoIP notifications
+    func voipRegistration() {
+        let mainQueue = DispatchQueue.main
+        // Create a push registry object
+        let voipRegistry: PKPushRegistry = PKPushRegistry(queue: mainQueue)
+        // Set the registry's delegate to self
+        voipRegistry.delegate = self
+        // Set the push type to VoIP
+        voipRegistry.desiredPushTypes = [PKPushType.voIP]
+    }
+
+    func pushRegistry(registry: PKPushRegistry!, didUpdatePushCredentials credentials: PKPushCredentials!, forType type: String!) {
+        // Register VoIP push token (a property of PKPushCredentials) with server
+
+        let deviceIdentifier: String = UIDevice.current.identifierForVendor!.uuidString
+
+        let subscriptionParameters = CreatePushSubscriptionParameters(environment: "development", channel: NotificationsChannels.shared.APNS_VOIP, udid: deviceIdentifier, platform: "ios", pushToken: credentials.token.base64EncodedString(), bundleIdentifier: nil)
+
+        ConnectyCube().createPushSubscription(params: subscriptionParameters.getRequestParameters(), successCallback:{ subscriptions in
+
+        }, errorCallback: { error in
+
+        })
+    }
+}
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+#import <PushKit/PushKit.h>
+
+@interface AppDelegate () <PKPushRegistryDelegate>
+
+@end
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication _)application didFinishLaunchingWithOptions:(NSDictionary _)launchOptions {
+      [self voipRegistration];
+      return YES;
+  }
+
+// Register for VoIP notifications
+
+- (void) voipRegistration {
+    dispatch_queue_t mainQueue = dispatch_get_main_queue()
+    // Create a push registry object
+    PKPushRegistry \* voipRegistry = [[PKPushRegistry alloc] initWithQueue: mainQueue];
+    // Set the registry's delegate to self
+    voipRegistry.delegate = self;
+    // Set the push type to VoIP
+    voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
+}
+
+// MARK: - PKPushRegistryDelegate protocol
+
+- (void)pushRegistry:(PKPushRegistry _)registry didUpdatePushCredentials: (PKPushCredentials _)credentials forType:(NSString \*)type {
+  // Register VoIP push token (a property of PKPushCredentials) with server
+
+      NSString *deviceIdentifier = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+
+      CYBSubscription *subscription = [CYBSubscription subscription];
+      subscription.notificationChannel = CYBNotificationChannelAPNSVOIP;
+      subscription.deviceUDID = deviceIdentifier;
+      subscription.deviceToken = credentials.token;
+
+      [CYBRequest createSubscription:subscription successBlock:^(NSArray *subscriptions) {
+
+      } errorBlock:^(NSError *error) {
+
+      }];
+
+  }
+
+@end
+
+```
+
+```swift
+import PushKit
+
+
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate, PKPushRegistryDelegate {
+
+  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+
+       self.voipRegistration()
+
+       return true
+  }
+
+  // Register for VoIP notifications
+  func voipRegistration {
+      let mainQueue = dispatch_get_main_queue()
+      // Create a push registry object
+      let voipRegistry: PKPushRegistry = PKPushRegistry(mainQueue)
+      // Set the registry's delegate to self
+      voipRegistry.delegate = self
+      // Set the push type to VoIP
+      voipRegistry.desiredPushTypes = [PKPushTypeVoIP]
+  }
+
+
+  // MARK: - PKPushRegistryDelegate protocol
+
+  func pushRegistry(registry: PKPushRegistry!, didUpdatePushCredentials credentials: PKPushCredentials!, forType type: String!) {
+      // Register VoIP push token (a property of PKPushCredentials) with server
+
+      let deviceIdentifier: String = UIDevice.current.identifierForVendor!.uuidString
+
+      let subscription: Subscription! = Subscription()
+      subscription.notificationChannel = NotificationChannel.APNSVOIP
+      subscription.deviceUDID = deviceIdentifier
+      subscription.deviceToken = credentials.token
+
+      Request.createSubscription(subscription, successBlock: { (subscriptions) in
+
+      }) { (error) in
+
+      }
+  }
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Send push notifications
+
+You can manually initiate sending of push notifications to user/users on any event in your application. To do so you need to form push notification parameters (payload) and set the push recipients:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+let cubeEventParams = CreateEventParams()
+        
+cubeEventParams.notificationType = NotificationType.shared.PUSH
+cubeEventParams.usersIds.add(20)
+cubeEventParams.eventType = PushEventType.shared.ONE_SHOT
+        
+var pushParameters = [String : String]()
+pushParameters["message"] = "Bitcoin trends"
+pushParameters["ios_badge"] = "2"
+pushParameters["ios_sound"] = "app_sound.wav"
+        
+// custom params
+pushParameters["thread_likes"] = "24"
+pushParameters["thread_id"] = "678923"
+        
+cubeEventParams.parameters = pushParameters as! KotlinMutableDictionary<NSString, AnyObject>
+        
+ConnectyCube().createPushEvent(event: cubeEventParams.getEventForRequest(), successCallback:{ result in
+            
+}, errorCallback: { error in
+            
+})
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+CYBEvent *event = [CYBEvent event];
+event.notificationType = CYBNotificationTypePush;
+event.usersIDs = @"21,22";
+event.type = CYBEventTypeOneShot;
+
+NSMutableDictionary \*pushParameters = [NSMutableDictionary dictionary];
+pushParameters[@"message"] = @"Bitcoin trends";
+pushParameters[@"ios_badge"] = @"2";
+pushParameters[@"ios_sound"] = @"app_sound.wav";
+
+// custom parameters
+pushParameters[@"thread_likes"] = @"24";
+pushParameters[@"thread_id"] = @"678923";
+
+NSError *error = nil;
+NSData *sendData = [NSJSONSerialization dataWithJSONObject:pushParameters
+options:NSJSONWritingPrettyPrinted
+error:&error];
+NSString \*jsonString = [[NSString alloc] initWithData:sendData
+encoding:NSUTF8StringEncoding];
+
+event.message = jsonString;
+
+[CYBRequest createEvent:event successBlock:^(NSArray \*events) {
+
+} errorBlock:^(NSError \*error) {
+
+}];
+
+```
+
+```swift
+let event = Event()
+event.notificationType = .push
+event.usersIDs = "20,21"
+event.type = .oneShot
+
+var pushParameters = [String : String]()
+pushParameters["message"] = "Bitcoin trends"
+pushParameters["ios_badge"] = "2"
+pushParameters["ios_sound"] = "app_sound.wav"
+
+// custom params
+pushParameters["thread_likes"] = "24"
+pushParameters["thread_id"] = "678923"
+
+if let jsonData = try? JSONSerialization.data(withJSONObject: pushParameters,
+                                            options: .prettyPrinted) {
+  let jsonString = String(bytes: jsonData,
+                          encoding: String.Encoding.utf8)
+
+  event.message = jsonString
+
+  Request.createEvent(event, successBlock: {(events) in
+
+  }, errorBlock: {(error) in
+
+  })
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Receive push notifications
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+// MARK: - AppDelegate
+
+func application(\_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
+
+}
+
+func application(\_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Swift.Void) {
+
+}
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+// MARK: - AppDelegate
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo {
+
+}
+
+- (void)application:(UIApplication *)__unused application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler {
+
+}
+
+```
+
+```swift
+// MARK: - AppDelegate
+
+func application(\_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
+
+}
+
+func application(\_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Swift.Void) {
+
+}
+
+```
+
+</TabItem>
+</Tabs>
+
+## Receive VoIP push notifications
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+// MARK: - PKPushRegistryDelegate protocol
+
+// Handle incoming pushes
+func pushRegistry(registry: PKPushRegistry!, didReceiveIncomingPushWithPayload payload: PKPushPayload!, forType type: String!) {
+
+}
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+// MARK: - PKPushRegistryDelegate protocol
+
+// Handle incoming pushes
+
+- (void)pushRegistry:(PKPushRegistry _)registry didReceiveIncomingPushWithPayload:(PKPushPayload _)payload forType:(NSString \*)type {
+
+}
+
+```
+
+```swift
+// MARK: - PKPushRegistryDelegate protocol
+
+// Handle incoming pushes
+func pushRegistry(registry: PKPushRegistry!, didReceiveIncomingPushWithPayload payload: PKPushPayload!, forType type: String!) {
+
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Unsubscribe
+
+The unregister operation allows you to stop receiving push notifications on a selected device:
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+UIApplication.shared.unregisterForRemoteNotifications()
+
+// Unregister from server
+// subscriptionId - subscription id from createPushSubscription()
+
+ConnectyCube().deletePushSubscription(subscriptionId: subscriptionId, successCallback:{
+
+}, errorCallback: { error in
+
+})
+
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+[[UIApplication sharedApplication] unregisterForRemoteNotifications];
+
+// Unregister from server
+NSString *deviceIdentifier = [UIDevice currentDevice].identifierForVendor.UUIDString;
+[CYBRequest unregisterSubscriptionForUniqueDeviceIdentifier:deviceIdentifier
+                                              successBlock:^() {
+
+} errorBlock:^(NSError *error) {
+
+}];
+```
+
+```swift
+UIApplication.shared.unregisterForRemoteNotifications()
+
+// Unregister from server
+let deviceIdentifier = UIDevice.current.identifierForVendor!.uuidString
+Request.unregisterSubscription(forUniqueDeviceIdentifier: deviceIdentifier, successBlock: {
+
+}) { (error) in
+
+}
+
+```
+
+</TabItem>
+</Tabs>
+
+## Unsubscribe VoIP push notifications
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v2'>
+```swift
+// MARK: - PKPushRegistryDelegate protocol
+
+func pushRegistry(_ registry: PKPushRegistry, didInvalidatePushTokenFor type: PKPushType) {
+
+}
+```
+
+</TabItem>
+<TabItem label='SDK v1 (deprecated)'>
+```objectivec
+// MARK: - PKPushRegistryDelegate protocol
+
+- (void)pushRegistry:(PKPushRegistry \*)registry didInvalidatePushTokenForType:(PKPushType)type;
+
+}
+
+```
+
+```swift
+// MARK: - PKPushRegistryDelegate protocol
+
+func pushRegistry(_ registry: PKPushRegistry, didInvalidatePushTokenFor type: PKPushType) {
+
+}
+```
+
+</TabItem>
+</Tabs>

@@ -1,0 +1,230 @@
+---
+title: Make first call
+description: A guide with the essential steps of how to make the first call via ConnectyCube Android Video SDK - from session creation to initialising and accepting the call.
+head:
+  - tag: title
+    content: Make first call guide | ConnectyCube Cordova SDK
+sidebar: 
+    label: Make first call
+    order: 2
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+**ConnectyCube Video Calling Peer-to-Peer (P2P) API** provides a solution for integrating real-time video and audio calling into your application. This API enables you to create smooth one-on-one and group video calls, supporting a wide range of use cases like virtual meetings, telemedicine consultations, social interactions, and more. The P2P approach ensures that media streams are transferred directly between users whenever possible, minimizing latency and delivering high-quality audio and video. 
+
+If you’re planning to build a new app, we recommend starting with one of our [code samples apps](/cordova/getting-started/code-samples/) as a foundation for your client app.    
+If you already have an app and you are looking to add chat and voice/video calls to it, proceed with this guide. This guide walks you through installing the ConnectyCube SDK in your app, configure it and then initiating the call to the opponent.
+
+## Before you start
+
+Before you start, make sure:
+1. You have access to ConnectyCube account. If you don’t have an account, [sign up here](https://admin.connectycube.com/register).
+2. An app created in ConnectyCube dashboard. Once logged into [your ConnectyCube account](https://admin.connectycube.com/signin), create a new application and make a note of the app credentials (app ID, auth key) that you’ll need for authentication.
+
+## Step 1: Configure SDK
+
+To use chat in a client app, you should install, import and configure ConnectyCube SDK.
+
+<div style={{
+  fontSize: "0.9em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "10px"
+}}>
+  <strong>Note:</strong> If the app is already created during the onboarding process and you followed all the instructions, you can skip the 'Configure SDK' step and start with <a href="#step-2-create-and-authorise-user">Create and Authorise User</a>.
+</div>
+
+### Install SDK
+
+Сonnect SDK js file as a normal script:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/connectycube/dist/connectycube.min.js"></script>
+```
+
+### Initialize SDK
+
+Initialize the SDK with your ConnectyCube application credentials. You can access your application credentials in [ConnectyCube Dashboard](https://admin.connectycube.com):
+
+<Tabs syncKey="codeExamples">
+<TabItem label='SDK v4'>
+```javascript
+const CREDENTIALS = {
+  appId: 21,
+  authKey: 'hhf87hfushuiwef',
+};
+
+ConnectyCube.init(CREDENTIALS);
+```
+</TabItem>
+
+<TabItem label='SDK v3'>
+```javascript
+const CREDENTIALS = {
+  appId: 21,
+  authKey: 'hhf87hfushuiwef',
+  authSecret: 'jjsdf898hfsdfk',
+};
+
+ConnectyCube.init(CREDENTIALS);
+```
+</TabItem>
+</Tabs>
+
+## Step 2: Create and Authorise User
+
+As a starting point, the user's session token needs to be created allowing to participate in calls.    
+
+```javascript
+const userCredentials = { login: "marvin18", password: "supersecurepwd" };
+// const userCredentials = { email: 'awesomeman@gmail.com', password: 'supersecurepwd' };
+// const userCredentials = { provider: 'facebook', keys: {token: 'a876as7db...asg34dasd8wqe'} };
+
+ConnectyCube.createSession(userCredentials)
+  .then((user) => {})
+  .catch((error) => {});
+```
+
+**Note:** With the request above, __the user is created automatically on the fly upon session creation__ using the login (or email) and password from the request parameters.
+
+<div style={{
+  fontSize: "0.75em",
+  color: "#666",
+  backgroundColor: "#f0f4ff",
+  borderLeft: "4px solid #ccc",
+  paddingLeft: "10px",
+  marginTop: "20px"
+}}>
+
+  <strong>Important:</strong> such approach with the automatic user creation works well for testing purposes and while the application isn’t launched on production. For better security it is recommended to deny the session creation without an existing user.    
+  For this, set ‘Session creation without an existing user entity’ to **Deny** under the **Application -> Overview -> Permissions** in the [admin panel](https://admin.connectycube.com/apps). 
+</div>
+
+## Step 3: Connect User to chat
+
+Connecting to the chat is an essential step in enabling real-time communication.
+
+To start using Video Calling API you need to connect user to Chat as ConnectyCube Chat API is used as a signalling transport for Video Calling API:
+
+```javascript
+const userCredentials = {
+  userId: 4448514,
+  password: "supersecurepwd",
+};
+
+ConnectyCube.chat
+  .connect(userCredentials)
+  .then(() => {
+    // connected
+  })
+  .catch((error) => {});
+```
+
+## Step 4: Connect WebRTC lib
+
+For Android - there is nothing extra required. Android Cordova WebView supports all the WebRTC API stack.
+
+For iOS - a [cordova-plugin-iosrtc](https://github.com/cordova-rtc/cordova-plugin-iosrtc) has to be used.
+
+## Step 5: Create video session
+
+In order to use Video Calling API you need to create a call session object - choose your opponents with whom you will have a call and a type of session (VIDEO or AUDIO):
+
+```javascript
+const calleesIds = [56, 76, 34]; // User's ids
+const sessionType = ConnectyCube.videochat.CallType.VIDEO; // AUDIO is also possible
+const additionalOptions = {};
+const session = ConnectyCube.videochat.createNewSession(calleesIds, sessionType, additionalOptions);
+```
+
+## Step 6: Access local media stream
+
+To have a video chat session you need to get an access to the user's devices (webcam / microphone):
+
+```javascript
+const mediaParams = {
+  audio: true,
+  video: true
+};
+
+session
+  .getUserMedia(mediaParams)
+  .then((localStream) => {
+    // display local stream
+    session.attachMediaStream("myVideoElementId", localStream, {
+      muted: true,
+      mirror: true,
+    });
+  })
+  .catch((error) => {});
+```
+
+This method lets the browser ask the user for permission to use devices. You should allow this dialog to access the stream. Otherwise, the browser can't obtain access and will throw an error for `getUserMedia` callback function.
+
+For more information about possible audio/video constraints, here is a good code sample from WebRTC team how to work with getUserMedia constraints: https://webrtc.github.io/samples/src/content/getusermedia/resolution/
+
+## Step 7: Initiate call
+
+Initiate Call function sets up the foundational connection between the caller and the selected opponents:
+
+```javascript
+const extension = {};
+session.call(extension, (error) => {});
+```
+
+The extension is used to pass any extra parameters in the request to your opponents.
+
+After this, your opponents will receive a callback call:
+
+```javascript
+ConnectyCube.videochat.onCallListener = function (session, extension) {};
+```
+
+Or if your opponents are offline or did not answer the call request:
+
+```javascript
+ConnectyCube.videochat.onUserNotAnswerListener = function (session, userId) {};
+```
+
+## Step 8: Accept a call
+
+To accept a call the following code snippet is used:
+
+```javascript
+ConnectyCube.videochat.onCallListener = function (session, extension) {
+  // Here we need to show a dialog with 2 buttons - Accept & Reject.
+  // By accepting -> run the following code:
+  //
+  // 1. await session.getUserMedia (...)
+  //
+  // 2. Accept call request:
+  const extension = {};
+  session.accept(extension);
+};
+```
+
+After this, you will get a confirmation in the following callback:
+
+```javascript
+ConnectyCube.videochat.onAcceptCallListener = function (session, userId, extension) {};
+```
+
+Also, both the caller and opponents will get a special callback with the remote stream:
+
+```javascript
+ConnectyCube.videochat.onRemoteStreamListener = function (session, userID, remoteStream) {
+  // attach the remote stream to DOM element
+  session.attachMediaStream("remoteOpponentVideoElementId", remoteStream);
+};
+```
+
+From this point, you and your opponents should start seeing and hearing each other.
+
+#### What’s next?
+
+To enhance your calling feature with advanced functionalities, such as call recording, screen sharing, or integrating emojis and attachments during calls, follow the API guides below. These additions will help create a more dynamic and engaging experience for your users!
+* [Voice/video calling SDK documentation](/cordova/videocalling)
+* [Conference calling SDK documentation](/cordova/videocalling-conference)

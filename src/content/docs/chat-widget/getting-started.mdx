@@ -1,0 +1,642 @@
+---
+title: Getting Started
+description: Implement a chat widget on your website with our concrete, step-by-step guide.
+head:
+  - tag: title
+    content: Chat Widget integration for your website | ConnectyCube Chat Widget
+sidebar: 
+    label: Getting Started
+    order: 1
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+The ConnectyCube Web Chat Widget is designed to simplify the process of adding chat functionality to your Web apps. This widget offers an out-of-the-box solution for embedding chat features - such as instant messaging, user presence, and file sharing - without the overhead of building a complete chat system from scratch. Key benefits include:
+  
+- **Easy integration:** plug the widget into your existing Web projects.
+- **Customizable interface:** adjust the look and feel to match your brand.
+- **Real-time messaging:** leverage ConnectyCube's reliable backend for instant communication.
+- **Responsive design:** works seamlessly on both desktop and mobile devices.
+- **Modular and extensible:** adapt the widget to your unique requirements.
+
+## Demo
+
+<a href="https://connectycube-chat-widget.onrender.com" target="_blank">https://connectycube-chat-widget.onrender.com</a>
+<br />
+<br />
+<kbd><img alt="ConnectyCube chat widget, main demo image" src="/images/chat_widget/chat-widget-main-demo.png" /></kbd>
+
+### Code samples
+
+See chat widget <a href="https://github.com/ConnectyCube/connectycube-chat-widget-samples" target="_blank">code samples</a> as a reference for faster integration.
+
+## Installation
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```bash
+npm install @connectycube/chat-widget
+
+// or
+
+yarn add @connectycube/chat-widget
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+
+Add the following scripts on your html page somewhere in `head` element:
+
+```html
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/connectycube@4/dist/connectycube.min.js"></script>
+<script src="https://unpkg.com/@connectycube/chat-widget@latest/dist/index.umd.js"></script>
+```
+
+</TabItem>
+</Tabs>
+
+## Display widget
+
+### Before you start
+
+Before you start, make sure:
+
+1. You have access to your ConnectyCube account. If you don't have an account, [sign up here](https://admin.connectycube.com/register).
+2. An app created in ConnectyCube dashboard. Once logged into [your ConnectyCube account](https://admin.connectycube.com/), create a new application and make a note of the app credentials (**App ID** and **Auth Key**) that you'll need for authentication.
+
+### React
+
+Import and place the following component in your app:
+
+```js
+import ConnectyCubeChatWidget from "@connectycube/chat-widget";
+
+...
+
+<ConnectyCubeChatWidget
+  appId="123"
+  authKey="11111111-2222-3333-4444-55555555"
+  userId="45"
+  userName="Samuel"
+  showOnlineUsersTab={false}
+  splitView={true}
+/>
+
+// userName - how other users will see your user name
+// userId - a User Id from your system
+```
+
+See chat widget <a href="https://github.com/ConnectyCube/connectycube-chat-widget-samples" target="_blank">code samples</a> as a reference for faster integration.
+
+### React 19
+
+By default, the widget uses the React 18-compatible build. To use it with React 19, import the dedicated ESM-only build instead:
+
+```js
+import ConnectyCubeChatWidget from '@connectycube/chat-widget/react19';
+```
+
+### Vanilla JS
+
+Place the following script in your app:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- ... -->
+  </head>
+  <body>
+    <!-- ... -->
+    <!-- @connectycube/chat-widget - start -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/connectycube@4/dist/connectycube.min.js"></script>
+    <script src="https://unpkg.com/@connectycube/chat-widget@latest/dist/index.umd.js"></script>
+    <script>
+      const chatWidgetContainer = document.createElement('div');
+      chatWidgetContainer.id = 'ConnectyCube_chat-widget';
+      document.body.appendChild(chatWidgetContainer);
+      const props = {
+        appId: 123,
+        authKey: '11111111-2222-3333-4444-55555555',
+        userId: '45', // a User Id from your system
+        userName: 'Samuel', // how other users will see your user name
+        showOnlineUsersTab: false,
+        splitView: true,
+      };
+      ReactDOM.createRoot(chatWidgetContainer).render(React.createElement(ConnectyCubeChatWidget, props));
+    </script>
+    <!-- @connectycube/chat-widget - end -->
+  </body>
+</html>
+```
+
+See chat widget <a href="https://github.com/ConnectyCube/connectycube-chat-widget-samples" target="_blank">code samples</a> as a reference for faster integration.
+
+## Feature configuration
+
+This section explains how to control specific features of the chat widget by enabling or disabling them through configuration [props](#props). Customize your widget behavior to meet your specific requirements without having to modify the core code.
+
+### Notifications
+
+This section allows you to configure how users are notified about new messages. You can control notifications, browser push notifications, and notification sounds independently for a fully customizable experience:
+
+- **showNotifications** - show browser notifications about new messages received
+- **webPushNotifications** - show browser push notifications about new messages received
+- **playSound** - play sound about new messages received
+
+### Online users
+
+We can displays a dedicated tab within the chat widget that lists all currently online users. This feature is useful in team or community-based chat environments where it's helpful to see who’s available before starting a conversation.
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  showOnlineUsersTab={true}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  showOnlineUsersTab: true,
+};
+```
+</TabItem>
+</Tabs>
+
+To make this feature work you also need to enable **Online Users API** in [ConnectyCube Daashboard](https://admin.connectycube.com/) in your app's permissions
+
+<img src="/images/chat_widget/apps-permissions.png" alt="ConnectyCube dashboard: apps permissions page" />
+
+
+### Toggle Button visibility
+
+**hideWidgetButton** - controls the visibility of the floating button that users click to open or close the chat widget. This is useful when you want to launch the widget programmatically or embed it inside a custom UI element instead of showing the default button. Read how to open a widget [by clicking on custom button](#open-widget-on-custom-button)
+
+### New chat buttons
+
+These settings let you control whether users can start new chats or initiate one-on-one conversations. Use them to restrict chat creation in specific environments or use cases, such as read-only communities or customer support-only contexts.
+
+- **hideNewChatButton** - controls the visibility of the main "New Chat" button in the chat widget interface.
+- **hideNewUserChatOption** - hides the option to start a new 1-on-1 conversation from within the "Create Chat" flow. This is useful when you only want to allow group chats or predefined channels.
+
+### Moderation 
+
+The moderation settings help maintain a safe and respectful chat environment. These options allow users to report inappropriate content and manage their personal block lists, giving them more control over their experience.
+
+At then moment the following moderation features supported:
+- **enableContentReporting** - users can report messages via a UI action
+- **enableBlockList** - users can block and unblock others from their profile
+
+#### Report user
+
+To enable Report user feature, you need to pass `enableContentReporting: true` prop. This will display a **Report** button in user profile:
+
+<img class="img-mobile-sample" src="/images/chat_widget/chat-widget-report-user-button.png" alt="Chat widget: report user button" />
+
+For user reporting to work properly, it requires the following:
+1. Go to [ConnectyCube Daashboard](https://admin.connectycube.com/)
+2. select your Application
+3. Navigate to **Custom** module via left sidebar
+4. Create new table called **UserReports** with the following fields:
+  - **reportedUserId** - integer
+  - **reason** - string
+
+<img src="/images/chat_widget/chat-widget-report-table.png" alt="Chat widget: report table in ConnectyCube dashboard" />
+
+Once the table is created, you can test the user reporting in Widget. You will see the reports appear in this table.
+
+#### Block user
+
+To enable Block user feature, you need to pass `enableBlockList: true` prop. This will display a **Block** button in user profile (see above).
+
+### Voice & video calls
+
+To enable audio and video calling in the chat widget, simply set the `enableCalls` prop to true:
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  enableCalls={true}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  enableCalls: true,
+};
+```
+</TabItem>
+</Tabs>
+
+This will activate the call buttons in the chat UI, allowing users to initiate audio or video calls directly from the widget.
+
+### AI
+
+The chat widget comes with advanced AI features to make conversations more effective and personalized.
+
+At then moment the following AI features supported:
+
+- **changeMessageTone** - adjust the tone of their messages before sending
+- **textSummarization** - instead of scrolling through long chats, users can generate concise summaries of past conversations.
+
+#### Change message tone
+
+Users can adjust the tone of their messages before sending. Whether they want to sound formal, casual, friendly, or professional, the widget helps rephrase messages instantly—ensuring the right style for every context.
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  ai={{
+    changeMessageTone: true,
+    apiKey: 'AIza1231231231231231231231-wHBRQv1M',
+  }}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  ai: {
+    changeMessageTone: true,
+    apiKey: 'AIza1231231231231231231231-wHBRQv1M',
+  },
+};
+```
+</TabItem>
+</Tabs>
+
+<br />
+<img alt="AI - change message tone (choose)" src="/images/chat_widget/ai-message-tone-choose.png" style={{ width: "100%", marginTop: '0px', objectFit: "contain" }} />
+<br />
+<img alt="AI - change message tone (result)"  src="/images/chat_widget/ai-message-tone-result.png" style={{ width: "100%", marginTop: '0px', objectFit: "contain" }} />
+
+#### Chat history summarisation
+
+Instead of scrolling through long chats, users can generate concise summaries of past conversations. This helps quickly recall key points, decisions, and action items without reading every single message.
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  ai={{
+    textSummarization: true,
+    apiKey: 'AIza1231231231231231231231-wHBRQv1M',
+  }}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  ai: {
+    textSummarization: true,
+    apiKey: 'AIza1231231231231231231231-wHBRQv1M',
+  },
+};
+```
+</TabItem>
+</Tabs>
+
+<br />
+<img alt="AI - get text summary"  src="/images/chat_widget/ai-text-summary.png" style={{ gridColumn: "1 / -1", marginTop: "0px", width: "100%", objectFit: "contain" }} />
+
+## Appearance & Styling
+
+The Appearance & Styling settings let you fully customize the visual presentation of the chat widget. You can control the look of the toggle button, badge, and chat portal using inline styles or CSS class names. This ensures your widget blends seamlessly into your app or site design.
+
+### Chat toggle button
+
+- **buttonTitle** - sets the accessible title (title attribute) of the chat toggle button. This is typically used for accessibility or tooltip text when hovering over the button
+- **buttonStyle** - applies inline styles to the chat toggle button
+
+### Portal
+
+- **portalStyle** - applies inline styles to the main chat window (portal)
+
+### Badge
+
+- **badgeStyle** - applies inline styles to the notification badge that appears on the toggle button (e.g., unread messages count)
+
+## Props
+
+
+| <div style="width:200px">Prop Name</div>                | Type                        | Description                                                                                                                              | Default Value |
+| ------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `appId`                   | `number \| string`          | The ConnectyCube Application ID                                                                                                                                                                           |               |
+| `authKey`                 | `string`                    | The ConnectyCube Authentication Key                                                                                                                                                                       |               |
+| `config`                  | `object`                    | _(Optional)_ Configuration options for ConnectyCube SDK                                                                                                                                                   |               |
+| `userId`                  | `string`                    | A User Id from your system                                                                                                                                                                                |               |
+| `userName`                | `string`                    | User name. This is how other users will see your user name                                                                                                                                                |               |
+| `userAvatar`              | `string`                    | _(Optional)_ User Avatar URL                                                                                                                                                                              |               |
+| `userProfileLink`         | `string`                    | _(Optional)_ User profile link URL                                                                                                                                                                        |               |
+| `enableUserLogin`         | `boolean`                   | _(Optional)_ Enables user login/register feature                                                                                                                                                          | false         |
+| `translation`             | `string`                    | _(Optional)_ Specifies the language for the chat widget. See [Supported Translations](#supported-translations)                                                                                            | "en"          |
+| `disableClickOutside`     | `boolean`                   | _(Optional)_ Hide chat widget by click or touch outside the widget's containers                                                                                                                           | false         |
+| `disableEscKeyPress`      | `boolean`                   | _(Optional)_ Hide chat widget by press "Escape" button                                                                                                                                                    | false         |
+| `hideWidgetButton`        | `boolean`                   | _(Optional)_ Allows to hide the button that opens/hides the chat widget                                                                                                                                   | false         |
+| `buttonTitle`             | `string`                    | _(Optional)_ The text displayed on the chat button                                                                                                                                                        | "Chat"        |
+| `portalStyle`             | `React.CSSProperties`       | _(Optional)_ Inline styles for the portal                                                                                                                                                                 |               |
+| `overlayStyle`            | `React.CSSProperties`       | _(Optional)_ Inline styles for the overlay                                                                                                                                                                |               |
+| `buttonStyle`             | `React.CSSProperties`       | _(Optional)_ Inline styles for the button                                                                                                                                                                 |               |
+| `badgeStyle`              | `React.CSSProperties`       | _(Optional)_ Inline styles for the unread messages badge                                                                                                                                                  |               |
+| `onlineBadgeStyle`        | `React.CSSProperties`       | _(Optional)_ Inline styles for the online users count badge                                                                                                                                               |               |
+| `open`                    | `boolean`                   | _(Optional)_ To control the visibility state of the chat widget                                                                                                                                           | false         |
+| `embedView`               | `boolean`                   | _(Optional)_ Embeds chat view by filling parent block. Props `open` and `hideNewChatButton` won't react and will be `true` by default                                                                     | false         |
+| `splitView`               | `boolean`                   | _(Optional)_ Displays the widget in split view (chats list and chat) or mobile view (only chats list or active chat)                                                                                      | false         |
+| `showChatStatus`          | `boolean`                   | _(Optional)_ Displays the chat connection status indicator                                                                                                                                                | false         |
+| `showOnlineUsersTab`      | `boolean`                   | _(Optional)_ Displays users tab with the list of online users                                                                                                                                             | false         |
+| `hideNewChatButton`       | `boolean`                   | _(Optional)_ Allows to hide the chat creation button                                                                                                                                                      | false         |
+| `hideNewUserChatOption`   | `boolean`                   | _(Optional)_ Allows to hide the New Message option in New Chat dropdown                                                                                                                                   | false         |
+| `hideNewGroupChatOption`  | `boolean`                   | _(Optional)_ Allows to hide the New Group option in New Chat dropdown                                                                                                                                     | false         |
+| `imgLogoSource`           | `string`                    | _(Optional)_ Allows to use custom logo source that is a relative path to the site's `index.html`                                                                                                          | "/logo.png"   |
+| `muted`                   | `boolean`                   | _(Optional)_ Mutes or unmutes notifications and sounds                                                                                                                                                    | false         |
+| `showNotifications`       | `boolean`                   | _(Optional)_ Allows receiving browser notifications                                                                                                                                                       | false         |
+| `playSound`               | `boolean`                   | _(Optional)_ Enables or disables playing sound on incoming messages                                                                                                                                       | true          |
+| `webPushNotifications`    | `boolean`                   | _(Optional)_ Allows receiving browser push notifications                                                                                                                                                  | false         |
+| `webPushVapidPublicKey`   | `string`                    | _(Optional)_ Vapid Public Key for push notifications                                                                                                                                                      | false         |
+| `serviceWorkerPath`       | `string`                    | _(Optional)_ Path to service worker for push notifications                                                                                                                                                | false         |
+| `attachmentsAccept`       | `string \| null`            | _(Optional)_ This prop sets to the accept attribute in [HTML \<input type="file" \/\>](https://www.w3schools.com/TAGs/att_input_accept.asp). Set `null` to disable the feature and hide attachment button | "\*\/\*"      |
+| `enableCalls`             | `boolean`                   | _(Optional)_ Enables the calls feature                                                                                                                                                                    | false         |
+| `enableUserStatuses`      | `boolean`                   | _(Optional)_ Enable user statuses, such as "Available", "Busy" and "Away"                                                                                                                                 | false         |
+| `enableLastSeen`          | `boolean`                   | _(Optional)_ Displays green dot on user avatar in chats list when user is online and last seen information on chat header                                                                                 | false         |
+| `enableContentReporting`  | `boolean`                   | _(Optional)_ Enable reporting bad content feature (will show Report button in user profile)                                                                                                               | false         |
+| `enableBlockList`         | `boolean`                   | _(Optional)_ Enable block user feature (will show Block button in user profile)                                                                                                                           | false         |
+| `enableOnlineUsersBadge`  | `boolean`                   | _(Optional)_ Displays online users badge on chat widget button                                                                                                                                            | false         |
+| `getOnlineUsersInterval`  | `number`                    | _(Optional)_ Allows to set how frequently the badge should be updated, in seconds. Min is 30 seconds                                                                                                      | 300           |
+| `enableUrlPreview`        | `boolean`                   | _(Optional)_ Allows to unfurl a link once posted in chat                                                                                                                                                  | false         |
+| `limitUrlsPreviews`       | `number`                    | _(Optional)_ Allows to set maximum displayed URLs preview in single message. Max is 5                                                                                                                     | 1             |
+| `quickActions`            | `object`                    | _(Optional)_ Configuration for quick actions dialog. See [Quick Actions](#quick-actions)                                                                                                                  |               |
+| `defaultChat`             | `object`                    | _(Optional)_ Force widget to open particular chat. See [Default Chat](#default-chat)                                                                                                                      |               |
+| `singleView`              | `boolean`                   | _(Optional)_ Enables customer support mode, allowing direct chat between users and product support teams.                                                                                                 | false         |
+| `singleViewChat`          | `object`                    | _(Optional)_ The chat widget will launch in support chat mode. Prop `singleView` must be enabled and [Quick Actions](#quick-actions) must be set. See [Single View Chat](#single-view-chat)               |               |
+| `termsAndConditions`      | `string`                    | _(Optional)_ Specifies the link for "Terms and Conditions" shown in the confirm email form when `singleView` is enabled.                                                                                  |               |
+| `ai`                      | `object`                    | _(Optional)_ Allows to enable and use AI features, such as get chat summary and change tone of a typed messages. See [AI](#ai)                                                                            |               |
+| `onUnreadCountChange`     | `(count: boolean) => void`  | _(Optional)_ Callback function to get update about unread messages count                                                                                                                                  |               |
+| `onOnlineUsersCountChange`| `(count: boolean) => void`  | _(Optional)_ Callback function to get update about online users count                                                                                                                                     |               |
+| `onOpenChange`            | `(open: boolean) => void`   | _(Optional)_ Callback function to get update about chat widget visibility                                                                                                                                 |               |
+
+### Quick Actions
+
+| Prop Name     | Type       | Description                                      |
+| ------------- | ---------- | ------------------------------------------------ |
+| `title`       | `string`   | _(Optional)_ Title for the quick actions section |
+| `description` | `string`   | _(Optional)_ Description for the quick actions   |
+| `actions`     | `string[]` | List of action strings                           |
+
+<kbd><img alt="ConnectyCube chat widget, Quick Actions demo" src="/images/chat_widget/chat-widget-quick-actions.png" width="400" /></kbd>
+
+### Supported Translations
+
+| Language Code | Language  |
+| ------------- | --------- |
+| `en`          | English   |
+| `el`          | Greek     |
+| `ua`          | Ukrainian |
+
+### Default Chat
+
+| <div style="width:130px">Prop Name</div>         | <div style="width:60px">Type</div>       | Description                                                                                 |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `id`             | `string`   | A key that will be used to identify the chat. Must be same value for each particular user between page reloads. |                                            |
+| `opponentUserId` | `string`   | User id to create chat with. Must be a User Id from your system, similar to **userId** prop |
+| `type`           | `string`   | Type of chat to create if not exist: 1on1 or group                                          |
+| `name`           | `string`   | Name of chat                                                                            |
+| `metadata`       | `map`      | Chat metadata                                                                           |
+
+### Single View
+
+| <div style="width:130px">Prop Name</div>        | <div style="width:60px">Type</div>          | Description                                                                                                                             |
+| ----------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | `string`     | A key that will be used to identify the chat. Must be same value for each particular user between page reloads. |  
+| `opponentUserIds` | `string`     | Opponent(s) ID/IDs for a support chat. Use separators, such as `","`, `", "`, or `" "`, or array of strings to add more IDs to the chat.  Must be a User Id from your system, similar to **userId** prop  |
+| `name`            | `string`     | _(Optional)_ Name of support chat                                                                                                       |
+| `photo`           | `string`     | _(Optional)_ Photo of support chat. Relative path to an image file, a URL, or ConnectyCube file's UID                                   |
+
+### Push notifications
+
+Push notifications allow to receive a message while the browser tab with widget is closed.
+
+For push notifications to work it need to do the following:
+
+1. pass `webPushNotifications: true` prop
+2. go to [ConnectyCube Dashboard](https://admin.connectycube.com/), Push Notifications, Credentials, WEBPUSH NOTIFICATIONS and fill all the required fields (Subject, PublicKey, PrivateKey)
+3. for `webPushVapidPublicKey` prop to set the same PublicKey which you set in ConnectyCube Dashboard.
+4. create a service worker and provide path to it via `serviceWorkerPath` prop. See chat widget <a href="https://github.com/ConnectyCube/connectycube-chat-widget-samples" target="_blank">code samples</a> as a reference.
+
+### AI
+
+| Prop Name           | Type      | Description                                                                                                                    |
+| ------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `apiKey`            | `string`  | An `GOOGLE_GENERATIVE_AI_API_KEY` for Google AI "gemini-2.5-flash" model. Register here https://aistudio.google.com/u/2/apikey |
+| `textSummarization` | `boolean` | _(Optional)_ Activates the ability to get a summary of a conversation for the selected time period                             |
+| `changeMessageTone` | `boolean` | _(Optional)_ Allows the ability to change the tone of a typed message to "positive", "negative", or "cringe"                   |
+
+## Recipes
+
+### Split view
+
+To display a widget with 2 separate UI blocks: left for chats list and the right one for messages stream.
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  splitView={true}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  splitView: true,
+};
+```
+</TabItem>
+</Tabs>
+
+<br />
+<kbd><img alt="ConnectyCube chat widget, split view image demo" src="/images/chat_widget/chat-widget-1.png" width="400" /></kbd>
+
+### Mobile view
+
+To display a widget with 1 UI block, which displays chats list and once selected a chat - it will display the messages stream.
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  splitView={false}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  splitView: false,
+};
+```
+</TabItem>
+</Tabs>
+
+<br />
+<kbd><img alt="ConnectyCube chat widget, mobile view image demo" src="/images/chat_widget/chat-widget-2.png" width="400" /></kbd>
+
+### Embedded view
+
+To embed the widget onto a page and display it e.g. full screen.
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  embedView={true}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  embedView: true,
+};
+```
+</TabItem>
+</Tabs>
+
+<br />
+<kbd><img alt="ConnectyCube chat widget, embedded view demo" src="/images/chat_widget/chat-widget-embedded-view.png" /></kbd>
+
+
+### Single View
+
+To display a widget in a single view mode - most popular for support chat use case.
+
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  singleView={true}
+  termsAndConditions='https://cats-store.com/terms-and-conditions'
+  singleViewChat={{
+    name: 'Cats Store',
+    photo: 'https://cataas.com/cat',
+    opponentUserIds: ['cat_support#007', 'cat_support#069'],
+  }}
+  quickActions={{
+    title: 'Quick Actions',
+    description: 'Select an action from the options below or type a first message to start a conversation.',
+    actions: [
+      '🛒 I have a question about my order',
+      '💳 I need help with payment or billing',
+      '⚙️ I’m having a technical issue',
+      '❓ Something else – connect me to support',
+    ],
+  }}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...,
+  singleView: true,
+  termsAndConditions: 'https://cats-store.com/terms-and-conditions'
+  singleViewChat: {
+    name: 'Cats Store',
+    photo: 'https://cataas.com/cat',
+    opponentUserIds: ['cat_support#007', 'cat_support#069'],
+  },
+  quickActions: {
+    title: 'Quick Actions',
+    description: 'Select an action from the options below or type a first message to start a conversation.',
+    actions: [
+      '🛒 I have a question about my order',
+      '💳 I need help with payment or billing',
+      '⚙️ I’m having a technical issue',
+      '❓ Something else – connect me to support',
+    ],
+  },
+};
+```
+</TabItem>
+</Tabs>
+
+<br />
+<kbd><img alt="ConnectyCube chat widget, single view demo" src="/images/chat_widget/chat-widget-single-view.png" width="600" /></kbd>
+
+
+### Display Chat button bottom left
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  buttonStyle={{"left": "0.5rem", "right": "auto"}}
+  portalStyle={{"left": "0.5rem", "right": "auto"}}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const props = {
+  ...
+  buttonStyle: {"left": "0.5rem", "right": "auto"}
+  portalStyle: {"left": "0.5rem", "right": "auto"},
+};
+```
+</TabItem>
+</Tabs>
+
+### Open widget on custom button
+
+<Tabs syncKey="chatWidget">
+<TabItem label='React'>
+```js
+<ConnectyCubeChatWidget
+  ...
+  open={true}
+/>
+```
+</TabItem>
+<TabItem label='Vanilla JS'>
+```js
+const openChatBtn = document.getElementById('openChatButton');
+openChatBtn.addEventListener('click', () => {
+  window.ConnectyCubeChatWidget.toggle()
+});
+```
+</TabItem>
+</Tabs>
+
+
+## Have an issue?
+
+Join our [Discord](https://discord.com/invite/zqbBWNCCFJ) for quick answers to your questions
+
+## Changelog
+
+[https://github.com/ConnectyCube/connectycube-chat-widget-samples/blob/main/CHANGELOG.md](https://github.com/ConnectyCube/connectycube-chat-widget-samples/blob/main/CHANGELOG.md)
