@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import Icons from 'unplugin-icons/vite';
 import config from './config.js';
+import starlightVideos from 'starlight-videos'
 
 export default defineConfig({
   site: config.endpoint,
@@ -72,6 +73,7 @@ export default defineConfig({
     },
   },
   integrations: [starlight({
+    plugins: [starlightVideos()],
     title: 'Connectycube',
     description: 'ConnectyCube Developers documentation (API docs, code samples, SDK) for integrating instant messaging, video calling and push notifications functionality for mobile and web developers',
     logo: {
