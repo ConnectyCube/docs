@@ -26,18 +26,18 @@ export const guides: CardType[] = [
         icon: 'ai',
         links: [
             {
-                title: 'How AI helps to enhance chat experience',
-                href: 'https://connectycube.com/2024/06/06/how-ai-helps-to-enhance-chat-experience/?cat=all',
-                target: '_blank',
-            },
-            {
-                title: 'Develop an AI-powered chatbot with ConnectyCube platform',
-                href: 'https://connectycube.com/2024/05/30/build-chatbot-with-connectycube-platform/?cat=all',
+                title: 'Chat Bots - Getting Started',
+                href: '/chat_bots',
                 target: '_blank',
             },
             {
                 title: 'Build a ConnectyCube ChatGPT Chatbot with the OpenAI API',
                 href: 'https://connectycube.com/2023/01/17/build-a-connectycube-chatgpt-chatbot-with-the-openai-api/?cat=all',
+                target: '_blank',
+            },
+            {
+                title: 'Use case: Chat Bot for Sharing Economy',
+                href: 'https://connectycube.com/2019/06/12/awesome-chat-bot-built-with-connectycube-platform-makes-the-future-better/',
                 target: '_blank',
             },
         ]

@@ -13,26 +13,21 @@ Bots are computer programs - third-party applications, that run inside ConnectyC
 
 Use chat bots to enable users to conversationally interact with your service or your product.
 
-A real use case of built chat bots on top of ConnectCube:  
-https://connectycube.com/2019/06/12/awesome-chat-bot-built-with-connectycube-platform-makes-the-future-better/
-
 Chat bots are controlled programmatically via [ConnectyCube Javascript SDK](/js/)
 
 ## Build your own Chat Bot
 
-### Register a ConnectyCube Account and create Application
+### Before you start
 
-Go to [ConnectyCube Dashboard](https://connectycube.com/signup/) and register your free ConnectyCube account.
+Before you start, make sure:
+1. You have access to your ConnectyCube account. If you don’t have an account, [sign up here](https://admin.connectycube.com/register).
+2. An app created in ConnectyCube dashboard. Once logged into [your ConnectyCube account](https://admin.connectycube.com), create a new application and make a note of the app credentials (**App ID** and **Auth Key**) that you’ll need for authentication.
 
-Upon sign in you will see the main page where you need to find the **New app** button and click on it to create an Application.
-
-At the end you will see the auto-generated values of the **Application ID**, **Authorization key** and **Authorization secret**. These are important - your app needs to use these credentials so that server knows who's there.
-
-### Create Bot user
+### Step 1: Create Bot user
 
 At ConnectyCube Dashboard, in **Users** module - create a new user to control your chat bot. Then save somewhere the user's ID, login and password. We will need these values later.
 
-### Create Node.js application to control your bot
+### Step 2: Create Node.js application to control your bot
 
 Open terminal and type the following commands:
 
@@ -46,15 +41,17 @@ This will ask you a bunch of questions, and then write a `package.json` file for
 
 The main thing is that we have now a `package.json` file and can start develop our first chat bot.
 
-### Connect ConnectyCube SDK
+### Step 3: Connect ConnectyCube SDK
 
 In terminal type the following command:
 
 ```bash
 npm install connectycube --save
+
+# yarn add connectycube
 ```
 
-### Create index.js file
+### Step 4: Create index.js file
 
 In terminal type the following command:
 
@@ -74,7 +71,7 @@ Then also open `package.json` file and add command to run our bot:
 
 Now open the `index.js` file and let's write some logic.
 
-### Making heart beat of your bot
+### Step 5: Making heart beat of your bot
 
 Open `index.js` file and write the following code:
 
@@ -84,16 +81,17 @@ const Connectycube = require("connectycube");
 // Initialise SDK
 
 const APPLICATION_CREDENTIALS = {
-  appId: 0,
-  authKey: "...",
+  appId: 0, // put your ConnectyCube App Id
+  authKey: "...", // put your ConnectyCube Auth Key
 };
 
 ConnectyCube.init(APPLICATION_CREDENTIALS);
 
 // Connect to Real-Time Chat
 const BOT_USER_CREDENTIALS = {
-  userId: 0,
-  password: "...",
+  userId: 0, // put your Bot user id
+  login: "...", // put your Bot user login
+  password: "...", // put your Bot user password
 };
 
 const onError = (error) => {
@@ -122,7 +120,13 @@ function onMessageListener(userId, msg) {
   }
 }
 
-Connectycube.chat.connect(BOT_USER_CREDENTIALS).then(onConnected).catch(onError);
+const userCredentials = { 
+  login: BOT_USER_CREDENTIALS.login, password: BOT_USER_CREDENTIALS.password 
+};
+
+ConnectyCube.createSession(userCredentials).then((session) => {
+  Connectycube.chat.connect(BOT_USER_CREDENTIALS).then(onConnected).catch(onError);
+}).catch((error) => {});
 
 process.on("exit", function () {
   console.log("Kill bot");
@@ -132,9 +136,11 @@ process.on("exit", function () {
 
 This is a simple bot that simply reply back with origin message. Nothing especial. But you got the idea.
 
-You just need to put in `APPLICATION_CREDENTIALS` variable your Application credentials and in `BOT_USER_CREDENTIALS` variable - you bot user credentials.
+You just need to put in `APPLICATION_CREDENTIALS` variable your ConnectyCube Application credentials and in `BOT_USER_CREDENTIALS` variable - you bot user credentials.
 
-### Run our bot
+The complete source code of chat bot template is available https://github.com/ConnectyCube/connectycube-chatbot-template
+
+###  Step 6: Run our bot
 
 In terminal type the following command:
 
@@ -142,27 +148,68 @@ In terminal type the following command:
 npm start
 ```
 
-Now you can write something to your bot and will receive a reply.
+Now you can send a message to your bot and will receive a reply.
 
-The complete source code of chat bot template is available https://github.com/ConnectyCube/connectycube-chatbot-template
 
-### Improve bot's intelligence
+### Step 7: Improve bot's intelligence - add AI
+
+#### Create OpenAI API Key
 
 Usually, it's not enough just to build simple bot which echoes your messages. It's better to add some intelligence for you bot.
 
-There are lots of AI/ML platforms that can be easily integrated into your bot, e.g.:
+Here is where ChatGPT OpenAI API comes to the rescue.
 
-- [RiveScript](https://www.rivescript.com/) - is a scripting language for chatterbots, making it easy to write trigger/response pairs for building up a bot's intelligence.
-- [DialogFlow](https://dialogflow.com/) - Build natural and rich conversational experiences, from Google
-- [wit.ai](https://wit.ai/) - Natural Language for Developers, from Facebook
+After making an OpenAI account, you’ll need an API Key. You can get an [OpenAI API Key here](https://platform.openai.com/api-keys) by clicking on **+ Create new secret key**.
 
-and many more.
+<div class="img-wrapper">
+  <img src="/images/guides/chat-bots/open-ai-create-api-key.png" alt="Create OpenAI API Key" />
+</div>
 
-## Host your bot
+Save that API key for later to use the OpenAI client library in your ConnectyCube Chat Bot.
+
+#### Connect OpenAI API SDK
+
+Open **index.js** file and write the following code:
+
+
+```javascript
+const { Configuration, OpenAIApi } = require("openai");
+const configuration = new Configuration({ apiKey: <YOUR_OPENAI_API_KEY> });
+
+const openai = new OpenAIApi(configuration); 
+const response = await openai.completions.create({ 
+  model: "gpt-3.5-turbo-instruct", 
+  prompt: msg.body, 
+  temperature: 0.7, // Creative risks the engine takes when generating text.
+  max_tokens: 3000, // Maximum completion length. max: 4000-prompt frequency_penalty: 0.7 // # between 0 and 1. The higher this value, the bigger the effort the model will make in not repeating itself. 
+});
+```
+
+And then modify the answer message object:
+
+```javascript
+const answerMessage = {
+  type: "chat",
+  body: response.choices[0].text,       
+    extension: {
+      save_to_history: 1,
+  },
+};
+```
+
+This code imports **openai**,  initializes a Configuration object. The function then calls the **openai.completions.create** function to use one of their language models to generate text based on **msg.body**.
+
+### Step 8: Host your bot
 
 You can host your chat bot on any virtual server. If you do not have any in your mind - we will recommend the following:
 
+- [Render](https://render.com/docs/deploy-node-express-app)
 - [Digital Ocean](https://www.digitalocean.com/)
 - [Heroku](https://www.heroku.com/)
 
-Above two are very simple in setup.
+
+### What's next
+
+From here you can do a 1-1 chat with your chat bot. Simply use [ConnectyCube.chat.send API](/js/messaging/#1-1-chat) from your mobile/web app to reach the bot.
+
+You also can add a bot to group chat, so the bot can listen for all conversation within group chat and react accordingly. To add a bot to group chat, use [ConnectyCube.chat.dialog.update API](/js/messaging/#addremove-occupants) and pass bot User Id in `push_all.occupants_ids` param. To send/receive messages in a group chat - refer to [Send/Receive chat messages - Group chat](/js/messaging/#group-chat) API documentation.
