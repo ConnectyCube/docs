@@ -63,14 +63,12 @@ pipeline {
           if (app_env == 'dev') {
             nodejs('NodeJs-22.2') {
               sh """
-                npm install
                 CONNECTYCUBE_URL=$DEV_URL npm run build
               """
             }
           } else {
             nodejs('NodeJs-22.2') {
               sh """
-                npm install
                 CONNECTYCUBE_URL=$PROD_URL npm run build
               """
             }
