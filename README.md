@@ -5,4 +5,4 @@ Public url: https://developers.connectycube.com
 ## Development
 
 - `npm install`
-- `npm run dev`
+- `npm run start`
