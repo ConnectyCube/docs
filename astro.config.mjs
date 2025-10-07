@@ -88,7 +88,7 @@ export default defineConfig({
         tag: 'meta',
         attrs: {
           property: 'og:image',
-          content: './public/connectycube_preview.png',
+          content: '/connectycube_preview.png',
         },
       },
       {
