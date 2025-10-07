@@ -85,6 +85,27 @@ export default defineConfig({
     favicon: '/favicon-tab.png',
     head: [
       {
+        tag: 'meta',
+        attrs: {
+          property: 'og:image',
+          content: './public/connectycube_preview.png',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          property: 'og:image:width',
+          content: '998',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          property: 'og:image:height',
+          content: '248',
+        },
+      },
+      {
         tag: 'link',
         attrs: {
           rel: 'icon',
