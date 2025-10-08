@@ -88,7 +88,7 @@ export default defineConfig({
         tag: 'meta',
         attrs: {
           property: 'og:image',
-          content: '/connectycube_preview.png',
+          content: `${config.endpoint}/connectycube_preview.png`,
         },
       },
       {
@@ -103,6 +103,20 @@ export default defineConfig({
         attrs: {
           property: 'og:image:height',
           content: '248',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          property: 'og:image:type',
+          content: 'image/png',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          name: 'twitter:image',
+          content: `${config.endpoint}/connectycube_preview.png`,
         },
       },
       {
