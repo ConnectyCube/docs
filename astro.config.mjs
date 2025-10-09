@@ -115,6 +115,34 @@ export default defineConfig({
       {
         tag: 'meta',
         attrs: {
+          name: 'twitter:title',
+          content: 'ConnectyCube Developers Documentation',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          name: 'twitter:description',
+          content: 'Guides for quick and easy integration of ConnectyCube Chat and Calls for Flutter, React Native, Web, Cordova, NativeScript, iOS and Android',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          name: 'twitter:site',
+          content: '@DevelopersConnectyCube',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          name: 'twitter:url',
+          content: 'https://developers.connectycube.com/',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
           name: 'twitter:image',
           content: `${config.endpoint}/connectycube_preview_twitter.jpg`,
         },
