@@ -144,7 +144,14 @@ export default defineConfig({
         tag: 'meta',
         attrs: {
           name: 'twitter:site',
-          content: '@ConnectyCubeDevelopers',
+          content: '@ConnectyCube',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          name: 'twitter:creator',
+          content: '@ConnectyCube',
         },
       },
       {
