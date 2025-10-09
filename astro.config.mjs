@@ -116,7 +116,7 @@ export default defineConfig({
         tag: 'meta',
         attrs: {
           name: 'twitter:image',
-          content: `${config.endpoint}/connectycube_preview.png`,
+          content: `${config.endpoint}/connectycube_preview_twitter.jpg`,
         },
       },
       {
