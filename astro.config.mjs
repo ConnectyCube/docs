@@ -87,8 +87,22 @@ export default defineConfig({
       {
         tag: 'meta',
         attrs: {
+          property: 'og:type',
+          content: 'website',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          property: 'og:site_name',
+          content: 'ConnectyCube Developers',
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
           property: 'og:image',
-          content: `${config.endpoint}/connectycube_preview.png`,
+          content: `${config.endpoint}/connectycube_preview.jpg`,
         },
       },
       {
@@ -109,7 +123,7 @@ export default defineConfig({
         tag: 'meta',
         attrs: {
           property: 'og:image:type',
-          content: 'image/png',
+          content: 'image/jpg',
         },
       },
       {
@@ -130,7 +144,7 @@ export default defineConfig({
         tag: 'meta',
         attrs: {
           name: 'twitter:site',
-          content: '@DevelopersConnectyCube',
+          content: '@ConnectyCubeDevelopers',
         },
       },
       {
@@ -145,6 +159,13 @@ export default defineConfig({
         attrs: {
           name: 'twitter:image',
           content: `${config.endpoint}/connectycube_preview_twitter.jpg`,
+        },
+      },
+      {
+        tag: 'meta',
+        attrs: {
+          property: 'twitter:image:type',
+          content: 'image/jpg',
         },
       },
       {
