@@ -36,10 +36,10 @@ See chat widget <a href="https://github.com/ConnectyCube/connectycube-chat-widge
 <Tabs syncKey="chatWidget">
 <TabItem label='React'>
 ```bash
+# npm
 npm install @connectycube/chat-widget
 
-// or
-
+# yarn
 yarn add @connectycube/chat-widget
 ```
 </TabItem>
@@ -54,6 +54,25 @@ Add the following scripts on your html page somewhere in `head` element:
 <script src="https://unpkg.com/@connectycube/chat-widget@latest/dist/index.umd.js"></script>
 ```
 
+</TabItem>
+<TabItem label='Angular'>
+```bash
+# npm
+npm install @connectycube/chat-widget-angular
+
+# yarn
+yarn add @connectycube/chat-widget-angular
+```
+
+As this component uses wrapped `@connectycube/chat-widget` install types for React and ReactDOM as `devDependencies`:
+
+```bash
+# npm
+npm install --save-dev @types/react @types/react-dom
+
+# yarn
+yarn add --dev @types/react @types/react-dom
+```
 </TabItem>
 </Tabs>
 
@@ -93,17 +112,21 @@ See chat widget <a href="https://github.com/ConnectyCube/connectycube-chat-widge
 Detailed YouTube guide **how to add ConnectyCube Chat Widget to React app**:
 <VideoPlayer link="https://www.youtube.com/watch?v=jmCQtCC6o1M" />
 
-### React 19
+#### React version support
 
-By default, the widget uses the React 18-compatible build. To use it with React 19, import the dedicated ESM-only build instead:
+Since v0.35.0, the default build of the widget targets React 19 and is provided as an ESM module.
+For React 18 projects, use the dedicated ESM-only build:
 
 ```js
-import ConnectyCubeChatWidget from '@connectycube/chat-widget/react19';
+// v0.35.0 and later:
+import ConnectyCubeChatWidget from '@connectycube/chat-widget'; // default: React 19
+import ConnectyCubeChatWidget from '@connectycube/chat-widget/react19'; // explicit React 19 build
+import ConnectyCubeChatWidget from '@connectycube/chat-widget/react18'; // dedicated React 18 build
+
+// v0.34.0 and earlier:
+import ConnectyCubeChatWidget from '@connectycube/chat-widget'; // default: React 18
+import ConnectyCubeChatWidget from '@connectycube/chat-widget/react19'; // React 19 build
 ```
-
-Detailed YouTube guide **how to add ConnectyCube Chat Widget to React app**:
-<VideoPlayer link="https://www.youtube.com/watch?v=jmCQtCC6o1M" />
-
 
 ### Vanilla JS
 
@@ -146,6 +169,44 @@ See chat widget <a href="https://github.com/ConnectyCube/connectycube-chat-widge
 Detailed YouTube guide **how to add ConnectyCube Chat Widget to Vanilla JS app**:
 <VideoPlayer link="https://www.youtube.com/watch?v=P9mUtWE6u1M" />
 
+### Angular
+
+Import and connect the `ConnectyCubeChatWidgetComponent` to your component (e.g., in `app.ts`):
+
+```js
+import { RouterOutlet } from '@angular/router';
+import { ConnectyCubeChatWidgetComponent } from '@connectycube/chat-widget-angular';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, ConnectyCubeChatWidgetComponent],
+  templateUrl: './app.html',
+  styleUrl: './app.css',
+})
+export class App {
+  ...
+  protected readonly connectycubeChatWidgetProps = {
+    appId: 111,
+    authKey: '11111111-2222-3333-4444-55555555',
+    config: { debug: { mode: 1 } },
+    userId: '112233', // a User Id from your system
+    userName: 'Samuel', // how other users will see your user name
+    showOnlineUsersTab: false,
+    splitView: true,
+  };
+}
+```
+
+Place the `<connectycube-chat-widget />` component in your template (`app.html`) and pass the props:
+
+```html
+<div id="app">
+  ...
+  <connectycube-chat-widget [props]="connectycubeChatWidgetProps" />
+</div>
+...
+```
+
 ## Feature configuration
 
 This section explains how to control specific features of the chat widget by enabling or disabling them through configuration [props](#props). Customize your widget behavior to meet your specific requirements without having to modify the core code.
@@ -177,6 +238,23 @@ const props = {
   ...
   showOnlineUsersTab: true,
 };
+```
+</TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    showOnlineUsersTab: true,
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
 ```
 </TabItem>
 </Tabs>
@@ -248,6 +326,23 @@ const props = {
 };
 ```
 </TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    enableCalls: true,
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
+```
+</TabItem>
 </Tabs>
 
 This will activate the call buttons in the chat UI, allowing users to initiate audio or video calls directly from the widget.
@@ -288,6 +383,26 @@ const props = {
 };
 ```
 </TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    ai: {
+      changeMessageTone: true,
+      apiKey: 'AIza1231231231231231231231-wHBRQv1M',
+    },
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
+```
+</TabItem>
 </Tabs>
 
 <br />
@@ -320,6 +435,26 @@ const props = {
     apiKey: 'AIza1231231231231231231231-wHBRQv1M',
   },
 };
+```
+</TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    ai: {
+      textSummarization: true,
+      apiKey: 'AIza1231231231231231231231-wHBRQv1M',
+    },
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
 ```
 </TabItem>
 </Tabs>
@@ -481,6 +616,23 @@ const props = {
 };
 ```
 </TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    splitView: false,
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
+```
+</TabItem>
 </Tabs>
 
 <br />
@@ -507,6 +659,23 @@ const props = {
 };
 ```
 </TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    splitView: true,
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
+```
+</TabItem>
 </Tabs>
 
 <br />
@@ -531,6 +700,23 @@ const props = {
   ...
   embedView: true,
 };
+```
+</TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    embedView: true,
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
 ```
 </TabItem>
 </Tabs>
@@ -574,7 +760,7 @@ To display a widget in a single view mode - most popular for support chat use ca
 const props = {
   ...,
   singleView: true,
-  termsAndConditions: 'https://cats-store.com/terms-and-conditions'
+  termsAndConditions: 'https://cats-store.com/terms-and-conditions',
   singleViewChat: {
     name: 'Cats Store',
     photo: 'https://cataas.com/cat',
@@ -591,6 +777,39 @@ const props = {
     ],
   },
 };
+```
+</TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...,
+    singleView: true,
+    termsAndConditions: 'https://cats-store.com/terms-and-conditions',
+    singleViewChat: {
+      name: 'Cats Store',
+      photo: 'https://cataas.com/cat',
+      opponentUserIds: ['cat_support#007', 'cat_support#069'],
+    },
+    quickActions: {
+      title: 'Quick Actions',
+      description: 'Select an action from the options below or type a first message to start a conversation.',
+      actions: [
+        '🛒 I have a question about my order',
+        '💳 I need help with payment or billing',
+        '⚙️ I’m having a technical issue',
+        '❓ Something else – connect me to support',
+      ],
+    },
+  }
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
 ```
 </TabItem>
 </Tabs>
@@ -620,6 +839,24 @@ const props = {
 };
 ```
 </TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...
+    buttonStyle: {"left": "0.5rem", "right": "auto"}
+    portalStyle: {"left": "0.5rem", "right": "auto"},
+  };
+}
+```
+
+in template:
+
+```html
+<connectycube-chat-widget [props]="props" />
+```
+</TabItem>
 </Tabs>
 
 ### Open widget on custom button
@@ -627,10 +864,25 @@ const props = {
 <Tabs syncKey="chatWidget">
 <TabItem label='React'>
 ```js
-<ConnectyCubeChatWidget
-  ...
-  open={true}
-/>
+import { useState } from 'react';
+import { ConnectyCubeChatWidget } from '@connectycube/chat-widget';
+
+export default function App() {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div>
+      <button onClick={() => setVisible((prevState) => !prevState)}>
+        {visible ? 'Close' : 'Open'}
+      </button>
+
+      <ConnectyCubeChatWidget
+        ...
+        open={visible}
+      />
+    </div>
+  );
+}
 ```
 </TabItem>
 <TabItem label='Vanilla JS'>
@@ -639,6 +891,33 @@ const openChatBtn = document.getElementById('openChatButton');
 openChatBtn.addEventListener('click', () => {
   window.ConnectyCubeChatWidget.toggle()
 });
+```
+</TabItem>
+<TabItem label='Angular'>
+```ts
+@Component({ ... })
+export class MyComponent {
+  props = {
+    ...,
+    open: false,
+  };
+
+  toggleVisible() {
+    this.props = { ...this.props, open: !this.props.open };
+  }
+}
+```
+
+in template:
+
+```html
+<div>
+  <button (click)="toggleVisible()">
+    {{ props.open ? 'Close' : 'Open' }}
+  </button>
+
+  <connectycube-chat-widget [props]="props" />
+</div>
 ```
 </TabItem>
 </Tabs>
