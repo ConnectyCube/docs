@@ -147,7 +147,58 @@ export default defineConfig({
     },
   },
   integrations: [starlight({
-    plugins: [starlightVideos(), starlightLlmsTxt()],
+    plugins: [starlightVideos(), starlightLlmsTxt({
+      // https://delucis.github.io/starlight-llms-txt/configuration/#promote
+      promote: [ 
+        'js/getting-started/send-first-chat-message', 
+        'js/getting-started/make-first-call', 
+        'js/messaging', 
+        'js/videocalling', 
+        'js/videocalling-conference', 
+        'js/*', 
+
+        'reactnative/getting-started/send-first-chat-message', 
+        'reactnative/getting-started/make-first-call', 
+        'reactnative/messaging', 
+        'reactnative/videocalling', 
+        'reactnative/videocalling-conference', 
+        'reactnative/*', 
+
+        'flutter/getting-started/send-first-chat-message', 
+        'flutter/getting-started/make-first-call', 
+        'flutter/messaging', 
+        'flutter/videocalling', 
+        'flutter/videocalling-conference', 
+        'flutter/*', 
+
+        'cordova/getting-started/send-first-chat-message', 
+        'cordova/getting-started/make-first-call', 
+        'cordova/messaging', 
+        'cordova/videocalling', 
+        'cordova/videocalling-conference', 
+        'cordova/*', 
+
+        'chat-widget/*', 
+
+        'chat_bots/*', 
+
+        'android/getting-started/send-first-chat-message', 
+        'android/getting-started/make-first-call', 
+        'android/messaging', 
+        'android/videocalling', 
+        'android/videocalling-conference', 
+        'android/*',
+
+        'ios/getting-started/send-first-chat-message', 
+        'ios/getting-started/make-first-call', 
+        'ios/messaging', 
+        'ios/videocalling', 
+        'ios/videocalling-conference', 
+        'ios/*',
+
+        'server/*',
+      ]
+    })],
     title: 'ConnectyCube',
     description: 'ConnectyCube Developers documentation (API docs, code samples, SDK) for integrating instant messaging, video calling and push notifications functionality for mobile and web developers',
     logo: {
