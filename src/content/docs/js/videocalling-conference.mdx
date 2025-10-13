@@ -9,6 +9,8 @@ sidebar:
     order: 6
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 ConnectyCube **Multiparty Video Conferencing API** is built on top of [WebRTC](https://webrtc.org/) protocol and based on top of [WebRTC SFU](https://webrtcglossary.com/sfu/) architecture.
 
 Max people per Conference call is 12.
@@ -32,6 +34,8 @@ Video Conferencing is available starting from [Advanced plan](https://connectycu
 ### Connect adapter.js
 
 Make sure you connected the latest version of [adapter.js](https://github.com/webrtc/adapter/tree/master/release)
+
+<Aside  type="caution" title="Note">If you use Chrome browser and emulate iOS device - you may get "The adapter.js addTrack polyfill only supports a single stream which is associated with the specified track" error. That's a known issue with adapter.js where it wrongly parses the user agent. Either use real iOS device or Safari browser to test iOS behaviour.</Aside>
 
 ### Set up config
 
