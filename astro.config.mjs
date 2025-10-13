@@ -5,6 +5,75 @@ import config from './config.js';
 import starlightVideos from 'starlight-videos'
 import starlightLlmsTxt from 'starlight-llms-txt'
 
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'node:url';
+
+const DOCS_DIR = 'src/content/docs';
+
+function* walk(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      yield* walk(full);
+    } else {
+      yield full;
+    }
+  }
+}
+
+function routeFromDocsPath(relFromDocs) {
+  // Normalize to forward slashes
+  const norm = relFromDocs.replaceAll('\\', '/');
+  // "getting-started/index.md" -> "getting-started"
+  if (norm.endsWith('/index.md') || norm.endsWith('/index.mdx')) {
+    return path.posix.dirname(norm);
+  }
+  // "guide/install.md" -> "guide/install"
+  return norm.replace(/\.mdx?$/, '');
+}
+
+// To can access the Markdown version of any documentation page by appending /index.html.md to the page URL
+const rawMarkdownExporter = {
+  name: 'starlight-raw-md',
+ hooks: {
+    'astro:build:done': async ({ dir }) => {
+      // Convert build output URL to a proper path
+      console.log("dir", dir)
+      const outRoot = fileURLToPath(dir);
+      console.log("outRoot", outRoot)
+
+      if (!fs.existsSync(DOCS_DIR)) {
+        console.warn(`[starlight-raw-md] Skipped: "${DOCS_DIR}" not found.`);
+        return;
+      }
+
+      let count = 0;
+      for (const file of walk(DOCS_DIR)) {
+        if (!/\.mdx?$/.test(file)) continue;
+        console.log("file", file)
+
+        const relFromDocs = path.relative(DOCS_DIR, file);
+           
+        const route = routeFromDocsPath(relFromDocs);
+
+        console.log("route", {relFromDocs, route})
+        const outDir = path.join(outRoot, route).toLowerCase().replaceAll(" ", "-") ; // ✅ now a string path
+
+        console.log("outDir", outDir)
+
+        fs.mkdirSync(outDir, { recursive: true });
+
+        const src = fs.readFileSync(file, 'utf-8');
+        fs.writeFileSync(path.join(outDir, 'index.html.md'), src);
+        count++;
+      }
+
+      console.log(`[starlight-raw-md] Exported ${count} Markdown files to /raw/**`)
+    },
+  },
+};
+
 export default defineConfig({
   site: config.endpoint,
   redirects: {
@@ -278,8 +347,8 @@ export default defineConfig({
         collapsed: true,
         autogenerate: { directory: 'guides' },
       },
-    ]
-  })],
+    ],
+  }), rawMarkdownExporter],
   vite: {
     plugins: [Icons({ compiler: 'astro' })],
   },
