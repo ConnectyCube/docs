@@ -135,7 +135,7 @@ pipeline {
                 noUploadOnFailure: true,
                 selectedRegion: 'us-east-1',
                 showDirectlyInBrowser: false,
-                sourceFile: 'dist/**/*',
+                sourceFile: 'dist/**',
                 storageClass: 'STANDARD',
                 uploadFromSlave: false,
                 useServerSideEncryption: false
