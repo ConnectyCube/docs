@@ -141,6 +141,10 @@ export default defineConfig({
       status: 301,
       destination: '/android/messaging',
     },
+     '/guides/ai': {
+      status: 301,
+      destination: '/guides/ai-assistants-and-llms'
+    },
   },
   integrations: [starlight({
     plugins: [starlightVideos(), starlightLlmsTxt()],
