@@ -75,7 +75,7 @@ export default defineConfig({
   },
   integrations: [starlight({
     plugins: [starlightVideos(), starlightLlmsTxt()],
-    title: 'Connectycube',
+    title: 'ConnectyCube',
     description: 'ConnectyCube Developers documentation (API docs, code samples, SDK) for integrating instant messaging, video calling and push notifications functionality for mobile and web developers',
     logo: {
       light: './src/assets/logo/logo_light.svg',
