@@ -58,7 +58,7 @@ const rawMarkdownExporter = {
         const route = routeFromDocsPath(relFromDocs);
 
         console.log("route", {relFromDocs, route})
-        const outDir = path.join(outRoot, route.toLowerCase()).replaceAll(" ", "-"); ; // ✅ now a string path
+        const outDir = path.join(outRoot, route.toLowerCase()).replaceAll(" ", "-"); // ✅ now a string path
 
         console.log("outDir", outDir)
 
