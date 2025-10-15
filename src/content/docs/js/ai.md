@@ -1,0 +1,264 @@
+---
+title: AI features
+description: Add chat history summarization and message tone changing features using Google Generative AI directly on client-side.
+head:
+  - tag: title
+    content: AI features | ConnectyCube
+sidebar:
+  label: AI features
+  order: 17
+---
+
+# Chat history summarization & Change message tone with AI
+
+This page shows **client-side** implementations of two AI features:
+
+- **Chat history summarization** — summarize recent chat messages.
+- **Change message tone** — rewrite the draft message into a chosen tone before send.
+
+> **Important security note:** all examples below call the Google generative AI. That **will** expose the API key in the client bundle. Only proceed if this risk is acceptable for your project (internal demo, protected app, etc.).
+
+---
+
+## Getting started
+
+### Install
+
+To enable AI capabilities, install the official SDKs:
+
+```bash
+npm install @ai-sdk/google ai
+# or
+yarn add @ai-sdk/google ai
+```
+
+### Get your API key
+
+Create or log in to your Google AI Studio account, then get an API key from <br/>
+👉 [https://aistudio.google.com/u/2/apikey](https://aistudio.google.com/u/2/apikey)
+
+Keep this key safe — anyone with access can use your quota.
+
+---
+
+### Base client init
+
+By default, the SDK reads the key from your .env file using the `GOOGLE_GENERATIVE_AI_API_KEY` variable:
+
+```env
+GOOGLE_GENERATIVE_AI_API_KEY=***
+```
+
+Import the Google model:
+
+```ts
+import { google } from '@ai-sdk/google';
+
+const googleModelAI = google('gemini-2.5-flash');
+```
+
+> This is the simplest and safest approach when building locally or in a controlled client environment.
+
+### Custom client init
+
+If you prefer to initialize manually (for example, inside a browser component), you can do it like this:
+
+```ts
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
+const google = createGoogleGenerativeAI({ apiKey: '***' });
+const googleModelAI = google('gemini-2.5-flash');
+```
+
+> ⚠️ Note: In this setup, the API key will be visible to anyone who inspects your app bundle. Use this only for client-only experiments or demos.
+
+---
+
+## Chat history summarization
+
+**Goal:** use an AI assistant to summarize chat messages in a conversation — helpful for users who rejoin long threads or support chats.
+
+### How it works
+
+1. Select relevant messages (for example, only from the last week).
+2. Build a readable transcript string.
+3. Send it to the model with a summarization prompt.
+4. Display the generated summary in the UI.
+
+### Helpers
+
+Some small utilities to format messages and pick time ranges:
+
+```ts
+import type { Users, Messages } from 'connectycube';
+
+export const filterMessagesByDaysAgo = (
+  messages: Messages.Message[] = [],
+  days: number = 0
+): Messages.Message[] => {
+  const daysAgoTimestamp = days ? Math.floor(Date.now() / 1000) - days * 24 * 60 * 60 : 0;
+  return messages.filter((message) => message.date_sent >= daysAgoTimestamp)
+}
+
+export const buildMessagesString = (
+  messages: Messages.Message[] = [],
+  users: Users.User[] = [],
+  currentUserId: number = 0
+): string => {
+  return messages.reduce((result, {sender_id, message, attachments}) => {
+    const user = users[sender_id] ?? {};
+    const userName = user.full_name || user.login || '<unknown>';
+    const postfix = sender_id === currentUserId ? '(me)' : '';
+    const attachmentsInfo = attachments ? `[attachments: ${JSON.stringify(attachments)}]` : '';
+
+    result += `- ${userName} ${postfix}: ${message || ''} ${attachmentsInfo}\n`;
+
+    return result;
+  }, '');
+}
+```
+
+### Example
+
+**Flow:** filter messages → build messages string → build a prompt → call `generateText` → render summary in UI.
+
+```ts
+// ...
+import type { Users, Messages } from 'connectycube';
+import { generateText } from 'ai';
+
+export const summarizeChatClient = async ({
+  messages: Messages.Message[] = [],
+  users: Users.User[] = [],
+  currentUserId: number = 0,
+  lng: string = 'English',
+  days: number = 0
+}) => {
+  // 1. filter (by period in days)
+  const filteredMessages = filterMessagesByDaysAgo(messages, 7);
+  // 2. build transcript
+  const messagesString = await buildMessagesString(filteredMessages, users, currentUserId);
+  // 3. prompt
+  const prompt = `You are a helpful assistant.
+    Provide a concise summary of the following chat messages in ${lng}.
+    Use bullet points or a short paragraph.
+    Focus on meaningful conversation and skip system messages or irrelevant technical info.
+    If a username ends with \" (me)", it means the message was sent by ME.
+    Messages:\n${messagesString}`;
+
+  // 4. generate with client model
+  try {
+    const result = await generateText({ model: googleModelAI, prompt });
+
+    return result.text; // developer decides where to render the chat summarization
+  } catch (error) {
+    console.error('Summarization failed', error);
+    throw error;
+  }
+}
+```
+
+### UI integration ideas
+
+- Add a Summarize button in the conversation.
+- Show a small loader while generating.
+- Render the summary in a popup, modal, or pinned message.
+- Optionally store summaries in local cache to avoid re-calling the model.
+
+---
+
+## Change message tone
+
+**Goal:** rewrite a user’s draft message in a different tone before sending.
+This can make conversations sound more positive, diplomatic, or even humorous — depending on your tone options.
+
+### How it works
+
+1. Take the current input text (before send).
+2. Ask AI to rewrite it in a specific tone.
+3. Replace the draft text with the rewritten version.
+
+### Example
+
+**Flow:** obtain a draft message → build a prompt → call `generateText` → change the draft message.
+
+```ts
+// ...
+import { generateText } from 'ai';
+
+export enum MessageTones {
+  POSITIVE = 'positive',
+  NEGATIVE = 'negative',
+  CRINGE = 'cringe',
+};
+
+export const changeMessageTone = async(
+  message: string = '',
+  tone: MessageTones = MessageTones.POSITIVE,
+  lng: string = 'English'
+): Promise<string> => {
+  const draft = message.trim();
+  const prompt = `Rewrite the text \"${draft}\" in ${tone} tone.
+    Use its original language, or ${lng} if unclear.
+    Avoid using italicized emotional interjections.
+    Instead, express the same emotions directly using plain text or appropriate emojis.
+    Keep all meaning.
+    Output only the rewritten text.`
+
+  try {
+    const result = await generateText({ model: googleModelAI, prompt });
+    return result.text;
+  } catch (error) {
+    console.error('Change message tone failed', error)
+    throw error;
+  }
+}
+```
+
+### React usage example**
+
+```tsx
+// ...
+import React, { useState } from 'react';
+
+const ChatInput: React.FC<{ lng?: string }> = ({ lng = 'English' }) => {
+  const [text, setText] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleTone = async (tone: MessageTones): Promise<void> => {
+    setLoading(true);
+
+    try {
+      const changedText = await changeMessageTone(text, tone, lng);
+
+      setText(changedText);
+    } catch (error) {
+      // show friendly UI error if needed
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <textarea value={text} onChange={(e) => setText(e.target.value)} />
+      <div>
+        <button onClick={() => handleTone(MessageTones.POSITIVE)} disabled={loading}>Positive</button>
+        <button onClick={() => handleTone(MessageTones.NEGATIVE)} disabled={loading}>Negative</button>
+        <button onClick={() => handleTone(MessageTones.CRINGE)} disabled={loading}>Cringe</button>
+      </div>
+    </div>
+  );
+}
+
+export default ChatInput;
+```
+
+---
+
+## Notes & tips
+
+- **Debounce API calls**: prevent sending multiple concurrent requests if the user clicks fast.
+- **Limit message count**: sending too many messages in one summarization will slow down responses and increase cost.
+- **Cache summaries**: reuse them unless new messages arrive.
+- **Respect privacy**: don’t send private or sensitive content to external APIs.
