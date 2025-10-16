@@ -1,17 +1,15 @@
 ---
-title: AI features
+title: AI Features
 description: Add chat history summarization and message tone changing features using Google Generative AI directly on client-side.
 head:
   - tag: title
-    content: AI features | ConnectyCube
+    content: AI Features | ConnectyCube
 sidebar:
-  label: AI features
+  label: AI Features
   order: 17
 ---
 
-# Chat history summarization & Change message tone with AI
-
-This page shows **client-side** implementations of two AI features:
+In this guide explains how to add AI features to your application with real-time chat:
 
 - **Chat history summarization** — summarize recent chat messages.
 - **Change message tone** — rewrite the draft message into a chosen tone before send.
@@ -127,7 +125,7 @@ export const buildMessagesString = (
 import type { Users, Messages } from 'connectycube';
 import { generateText } from 'ai';
 
-export const summarizeChatClient = async ({
+export const summarizeChatHistory = async ({
   messages: Messages.Message[] = [],
   users: Users.User[] = [],
   currentUserId: number = 0,
@@ -136,9 +134,9 @@ export const summarizeChatClient = async ({
 }) => {
   // 1. filter (by period in days)
   const filteredMessages = filterMessagesByDaysAgo(messages, 7);
-  // 2. build transcript
+  // 2. build the transcript
   const messagesString = await buildMessagesString(filteredMessages, users, currentUserId);
-  // 3. prompt
+  // 3. build the prompt
   const prompt = `You are a helpful assistant.
     Provide a concise summary of the following chat messages in ${lng}.
     Use bullet points or a short paragraph.
@@ -146,7 +144,7 @@ export const summarizeChatClient = async ({
     If a username ends with \" (me)", it means the message was sent by ME.
     Messages:\n${messagesString}`;
 
-  // 4. generate with client model
+  // 4. generate the summary
   try {
     const result = await generateText({ model: googleModelAI, prompt });
 
@@ -215,15 +213,40 @@ export const changeMessageTone = async(
 }
 ```
 
-### React usage example**
+### React usage example
 
 ```tsx
 // ...
-import React, { useState } from 'react';
+import type { Dialogs } from 'connectycube';
+import ConnectyCube, { ChatType, DialogType } from 'connectycube';
+import React, { useState, useCallback } from 'react';
 
-const ChatInput: React.FC<{ lng?: string }> = ({ lng = 'English' }) => {
+type ChatInputProps = {
+  dialog: Dialogs.dialog,
+  currentUserId: number,
+  lng?: string
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({ dialog, currentUserId, lng = 'English' }) => {
+  // ...
   const [text, setText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  const sendMessage = useCallback(() => {
+    const message = {
+      type: dialog.type === DialogType.PRIVATE ? ChatType.CHAT : ChatType.GROUPCHAT,
+      body: text,
+      extension: {
+        save_to_history: 1,
+        dialog_id: dialog._id
+      }
+    };
+    const to = dialog.type === DialogType.PRIVATE
+      ? dialog.occupants_ids.find((occupantId) => occupantId !== currentUserId)
+      : dialog._id
+
+    ConnectyCube.chat.send(to, message)
+  }, [dialog, text]);
 
   const handleTone = async (tone: MessageTones): Promise<void> => {
     setLoading(true);
@@ -242,6 +265,7 @@ const ChatInput: React.FC<{ lng?: string }> = ({ lng = 'English' }) => {
   return (
     <div>
       <textarea value={text} onChange={(e) => setText(e.target.value)} />
+      <button onClick={sendMessage} disabled={loading}>Send</button>
       <div>
         <button onClick={() => handleTone(MessageTones.POSITIVE)} disabled={loading}>Positive</button>
         <button onClick={() => handleTone(MessageTones.NEGATIVE)} disabled={loading}>Negative</button>
