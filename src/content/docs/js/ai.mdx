@@ -9,7 +9,9 @@ sidebar:
   order: 17
 ---
 
-In this guide explains how to add AI features to your application with real-time chat:
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+Learn how to add AI features to your application through real-time chat.:
 
 - **Chat history summarization** — summarize recent chat messages.
 - **Change message tone** — rewrite the draft message into a chosen tone before send.
@@ -24,11 +26,18 @@ In this guide explains how to add AI features to your application with real-time
 
 To enable AI capabilities, install the official SDKs:
 
+<Tabs syncKey="ai">
+<TabItem label='NPM'>
 ```bash
 npm install @ai-sdk/google ai
-# or
+```
+</TabItem>
+<TabItem label='Yarn'>
+```bash
 yarn add @ai-sdk/google ai
 ```
+</TabItem>
+</Tabs>
 
 ### Get your API key
 
