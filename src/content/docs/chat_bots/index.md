@@ -46,7 +46,7 @@ The main thing is that we have now a `package.json` file and can start develop o
 In terminal type the following command:
 
 ```bash
-npm install connectycube --save
+npm install --save connectycube
 
 # yarn add connectycube
 ```
