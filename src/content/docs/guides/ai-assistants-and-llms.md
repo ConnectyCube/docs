@@ -9,14 +9,6 @@ sidebar:
     order: 3
 ---
 
-Here you'll learn how you can use AI assistants and LLMs effectively in your apps development with ConnectyCube.
-
-## AI Assistant in Documentation
-
-Coming soon
-
-## Plain Text Documentation
-
 The ConnectyCube documentation is also available in plain text format, making it easy for LLMs and AI tools to read and understand.
 
 You can access the following plain text files:
