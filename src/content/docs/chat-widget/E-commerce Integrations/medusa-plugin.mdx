@@ -125,8 +125,11 @@ From Medusa dashboard there will be a new page called Chat, with the widget embe
    "use client"
 
    import React, { useEffect, useState } from "react"
-   import ConnectyCubeChatWidget from "@connectycube/chat-widget/react19"
    import { StoreCustomer, StoreProduct } from "@medusajs/types"
+   // for React 19+
+   import ConnectyCubeChatWidget from "@connectycube/chat-widget"
+   // or if you use React 18
+   // import ConnectyCubeChatWidget from "@connectycube/chat-widget/react18";
     
    export interface ChatWidgetProps {
      customer: StoreCustomer | null

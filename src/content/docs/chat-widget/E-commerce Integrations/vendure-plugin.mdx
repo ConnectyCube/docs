@@ -94,7 +94,10 @@ In a case you have [Multi-vendor Marketplace](https://docs.vendure.io/guides/how
 
   ```typescript
     import { useEffect, useState } from 'react';
+    // for React 19+
     import ConnectyCubeChatWidget from '@connectycube/chat-widget';
+    // or if you use React 18
+    // import ConnectyCubeChatWidget from "@connectycube/chat-widget/react18";
 
     type StoreCustomer = {
       id: string;
