@@ -79,7 +79,7 @@ You should get the dialog where the video call is initiated <https://developers.
       });
 
 and init chatMessagesManager, [link for the docs is here](<https://developers.connectycube.com/flutter/messaging/#sendreceive-chat-messages>).
-Also check the [code in sample](<https://github.com/ConnectyCube/connectycube-flutter-samples/blob/9d51d082d533038a[…]a3a237f04b3452018d5/chat_sample/lib/src/chat_dialog_screen.dart>) for refference.
+Also check the [code in sample](<https://github.com/ConnectyCube/connectycube-flutter-samples/blob/9d51d082d533038ac2158a3a237f04b3452018d5/chat_sample/lib/src/chat_dialog_screen.dart#L936>) for refference.
 
 CubeChatConnection.instance.chatMessagesManager!.chatMessagesStream.listen(onReceiveMessage);
 
