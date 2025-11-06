@@ -41,8 +41,10 @@ From Vendure dashboard there will be a new page called Chat, with the widget emb
 
 1. Add plugin to your Vendure app:
 
-  ```
+  ```bash
   yarn add @connectycube/vendure-plugin-chat-widget
+
+  # npm install --save @connectycube/vendure-plugin-chat-widget
   ```
 
 2.  Create ConnectyCube account [https://connectycube.com/signup](https://connectycube.com/signup/) and application, obtain credentials:
@@ -63,6 +65,14 @@ Also, go to **Chat -> Custom Fields** and create a new custom field called `exte
            appId: ..., // ConnectyCube App Id
            authKey: "", // ConnectyCube Auth Key
         }),
+
+        AdminUiPlugin.init({
+          ...
+          app: compileUiExtensions({
+            ...
+            extensions: [ChatWidgetPlugin.uiExtensions],
+          }),
+        }),
       ];
     ```
 
@@ -76,18 +86,21 @@ In a case you have [Multi-vendor Marketplace](https://docs.vendure.io/guides/how
 
 1. Add chat widget to your Storefront app. For example, let's use [Remix storefront starter](https://github.com/vendure-ecommerce/storefront-remix-starter) as an example:
 
-  ```
+  ```bash
     yarn add @connectycube/chat-widget
+
+    # npm install --save @connectycube/chat-widget
+    
     npx connectycube patch-ssr     # Apply SSR patches for Remix to work well
   ```
 
 2. Add the following variables to your `.env` file:
 
-  ```
-    CHAT_WIDGET_CONNECTYCUBE_APP_ID=<CONNECTYCUBE APP ID>
-    CHAT_WIDGET_CONNECTYCUBE_AUTH_KEY="<CONNECTYCUBE AUTH KEY>
-    CHAT_WIDGET_STORE_ID=<YOUR STORE ID>
-    CHAT_WIDGET_STORE_NAME=<YOUR STORE NAME>
+  ```bash
+    CHAT_WIDGET_CONNECTYCUBE_APP_ID=<CONNECTYCUBE_APP_ID>
+    CHAT_WIDGET_CONNECTYCUBE_AUTH_KEY=<CONNECTYCUBE_AUTH_KEY>
+    CHAT_WIDGET_STORE_ID=<YOUR_STORE_ID>
+    CHAT_WIDGET_STORE_NAME=<YOUR_STORE_NAME>
   ```
 
 3. Create `app/components/ChatWidget.tsx` component with the following content:
