@@ -21,3 +21,4 @@ A special key called **API Key** needs to be used to access the Admin API. You c
 
   * [Statistics](/admin_api/statistics/)
   * [Chat](/admin_api/chat/)
+  * [Meeting](/admin_api/meeting/)
