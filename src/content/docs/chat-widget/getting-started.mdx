@@ -535,14 +535,17 @@ The Appearance & Styling settings let you fully customize the visual presentatio
 
 ### Default Chat
 
-| Prop Name         | Type                | Description                                                                                                                                 |
-| ----------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`              | `string`             | A key that will be used to identify the chat. Must be same value for each particular user between page reloads.                              |
-| `opponentUserId`  | `string \| string[]` | _(Optional)_ User id(s) to create chat with. Must be a User Id from your system, similar to **userId** prop                                 |
-| `type`            | `string`             | Type of chat to create if not exist: 1on1 or group                                                                                          |
-| `name`            | `string`             | _(Optional)_ Name of chat                                                                                                                    |
-| `photo`           | `string`             | _(Optional)_ Chat photo                                                                                                                     |
-| `metadata`        | `object`             | _(Optional)_ Chat metadata                                                                                                                  |
+Before start working with Default Chat feature, make sure that you have created required **externalId** custom field in your [ConnectyCube Dashboard](https://admin.connectycube.com).
+
+<kbd><img alt="ConnectyCube chat widget, add chat custom fields" src="/images/chat_widget/chat-widget-set-chat-custom-fields.png" width="800" /></kbd>
+
+| <div style="width:130px">Prop Name</div>         | <div style="width:60px">Type</div>       | Description                                                                                 |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `id`             | `string`   | A key that will be used to identify the chat. Must be same value for each particular user between page reloads. |                                            |
+| `opponentUserId` | `string`   | User id to create chat with. Must be a User Id from your system, similar to **userId** prop |
+| `type`           | `string`   | Type of chat to create if not exist: 1on1 or group                                          |
+| `name`           | `string`   | Name of chat                                                                            |
+| `metadata`       | `map`      | Chat metadata                                                                           |
 
 ### Single View Chat
 
